@@ -2,6 +2,16 @@ from copy import deepcopy
 from typing import Any, Dict
 
 
+def _resolve_runtime_profile(
+    runtime: Dict[str, Any], selected_module: Dict[str, Any], runtime_key: str, legacy_key: str
+) -> Any:
+    # Preferred normalized source is runtime.*_profile; lowercase selected_module keys
+    # remain as legacy compatibility inputs when runtime does not define a value.
+    if runtime_key in runtime:
+        return runtime.get(runtime_key)
+    return selected_module.get(legacy_key)
+
+
 def _add_model_alias(config: Any) -> Dict[str, Any]:
     if not isinstance(config, dict):
         return {}
@@ -22,6 +32,7 @@ def _copy_model_name_to_model(providers: Any) -> None:
 
 
 def normalize_config(raw_config: dict) -> Dict[str, Any]:
+    """Normalize config while preserving explicit runtime profile selections."""
     config = deepcopy(raw_config) if isinstance(raw_config, dict) else {}
 
     runtime = config.get("runtime")
@@ -34,9 +45,15 @@ def normalize_config(raw_config: dict) -> Dict[str, Any]:
     if not isinstance(selected_module, dict):
         selected_module = {}
 
-    runtime["llm_profile"] = selected_module.get("llm")
-    runtime["asr_profile"] = selected_module.get("asr")
-    runtime["tts_profile"] = selected_module.get("tts")
+    runtime["llm_profile"] = _resolve_runtime_profile(
+        runtime, selected_module, "llm_profile", "llm"
+    )
+    runtime["asr_profile"] = _resolve_runtime_profile(
+        runtime, selected_module, "asr_profile", "asr"
+    )
+    runtime["tts_profile"] = _resolve_runtime_profile(
+        runtime, selected_module, "tts_profile", "tts"
+    )
     config["runtime"] = runtime
 
     for module_name in ("LLM", "ASR", "TTS"):
