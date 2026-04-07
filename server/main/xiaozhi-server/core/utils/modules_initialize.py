@@ -1,7 +1,12 @@
 from typing import Dict, Any
 from config.logger import setup_logging
 from core.utils import tts, llm, intent, memory, vad, asr
-from core.utils.config_normalizer import normalize_config
+from core.utils.config_normalizer import (
+    normalize_config,
+    resolve_asr_config,
+    resolve_llm_config,
+    resolve_tts_config,
+)
 
 TAG = __name__
 logger = setup_logging()
@@ -27,8 +32,14 @@ def initialize_modules(
         Dict[str, Any]: 包含所有初始化后的模块的字典
     """
     config = normalize_config(config)
+    llm_cfg = resolve_llm_config(config)
+    asr_cfg = resolve_asr_config(config)
+    tts_cfg = resolve_tts_config(config)
     logger.bind(tag=TAG).info(
-        f"配置归一化完成，runtime.llm_profile={config['runtime']['llm_profile']}"
+        "配置归一化完成，"
+        f"runtime.llm_profile={config['runtime']['llm_profile']}, "
+        f"runtime.asr_profile={config['runtime']['asr_profile']}, "
+        f"runtime.tts_profile={config['runtime']['tts_profile']}"
     )
 
     modules = {}
@@ -36,7 +47,7 @@ def initialize_modules(
     # 初始化TTS模块
     if init_tts:
         select_tts_module = config["selected_module"]["TTS"]
-        modules["tts"] = initialize_tts(config)
+        modules["tts"] = initialize_tts(config, tts_cfg)
         logger.bind(tag=TAG).info(f"初始化组件: tts成功 {select_tts_module}")
 
     # 初始化LLM模块
@@ -44,12 +55,12 @@ def initialize_modules(
         select_llm_module = config["selected_module"]["LLM"]
         llm_type = (
             select_llm_module
-            if "type" not in config["LLM"][select_llm_module]
-            else config["LLM"][select_llm_module]["type"]
+            if "type" not in llm_cfg
+            else llm_cfg["type"]
         )
         modules["llm"] = llm.create_instance(
             llm_type,
-            config["LLM"][select_llm_module],
+            llm_cfg,
         )
         logger.bind(tag=TAG).info(f"初始化组件: llm成功 {select_llm_module}")
 
@@ -99,36 +110,40 @@ def initialize_modules(
     # 初始化ASR模块
     if init_asr:
         select_asr_module = config["selected_module"]["ASR"]
-        modules["asr"] = initialize_asr(config)
+        modules["asr"] = initialize_asr(config, asr_cfg)
         logger.bind(tag=TAG).info(f"初始化组件: asr成功 {select_asr_module}")
     return modules
 
 
-def initialize_tts(config):
+def initialize_tts(config, tts_cfg=None):
     select_tts_module = config["selected_module"]["TTS"]
+    if tts_cfg is None:
+        tts_cfg = resolve_tts_config(config)
     tts_type = (
         select_tts_module
-        if "type" not in config["TTS"][select_tts_module]
-        else config["TTS"][select_tts_module]["type"]
+        if "type" not in tts_cfg
+        else tts_cfg["type"]
     )
     new_tts = tts.create_instance(
         tts_type,
-        config["TTS"][select_tts_module],
+        tts_cfg,
         str(config.get("delete_audio", True)).lower() in ("true", "1", "yes"),
     )
     return new_tts
 
 
-def initialize_asr(config):
+def initialize_asr(config, asr_cfg=None):
     select_asr_module = config["selected_module"]["ASR"]
+    if asr_cfg is None:
+        asr_cfg = resolve_asr_config(config)
     asr_type = (
         select_asr_module
-        if "type" not in config["ASR"][select_asr_module]
-        else config["ASR"][select_asr_module]["type"]
+        if "type" not in asr_cfg
+        else asr_cfg["type"]
     )
     new_asr = asr.create_instance(
         asr_type,
-        config["ASR"][select_asr_module],
+        asr_cfg,
         str(config.get("delete_audio", True)).lower() in ("true", "1", "yes"),
     )
     logger.bind(tag=TAG).info("ASR模块初始化完成")
