@@ -1,6 +1,7 @@
 from typing import Dict, Any
 from config.logger import setup_logging
 from core.utils import tts, llm, intent, memory, vad, asr
+from core.utils.config_normalizer import normalize_config
 
 TAG = __name__
 logger = setup_logging()
@@ -25,6 +26,11 @@ def initialize_modules(
     Returns:
         Dict[str, Any]: 包含所有初始化后的模块的字典
     """
+    config = normalize_config(config)
+    logger.bind(tag=TAG).info(
+        f"配置归一化完成，runtime.llm_profile={config['runtime']['llm_profile']}"
+    )
+
     modules = {}
 
     # 初始化TTS模块
@@ -148,4 +154,3 @@ def initialize_voiceprint(asr_instance, config):
     except Exception as e:
         logger.bind(tag=TAG).error(f"动态初始化声纹识别功能失败: {str(e)}")
         return False
-
