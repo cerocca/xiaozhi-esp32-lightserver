@@ -12,3 +12,5 @@ tmp/
 
 # Models
 models/
+.DS_Store
+._*
