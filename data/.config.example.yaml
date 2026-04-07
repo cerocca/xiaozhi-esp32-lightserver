@@ -1,0 +1,60 @@
+# Example config for xiaozhi-esp32-server
+# Copy this file to:
+#   data/.config.yaml
+# Then replace placeholder values with real ones.
+#
+# IMPORTANT:
+# - Do not commit secrets in data/.config.yaml
+# - Keep this example file versioned
+# - The real runtime path is:
+#   /home/ciru/xiaozhi-esp32-server/data/.config.yaml
+
+selected_module:
+  llm: groq_llm
+  asr: groq_asr
+  tts: piper_tts
+  intent: nointent
+  memory: nomem
+  vad: silero_vad
+
+LLM:
+  groq_llm:
+    type: openai
+    base_url: https://api.groq.com/openai/v1
+    api_key: YOUR_GROQ_API_KEY
+    model: llama-3.1-8b-instant
+    temperature: 0.7
+
+ASR:
+  groq_asr:
+    type: groq
+    api_key: YOUR_GROQ_API_KEY
+    model: whisper-large-v3-turbo
+
+TTS:
+  piper_tts:
+    type: openai
+    base_url: http://YOUR_SERVER_IP:8091/v1
+    api_key: not-needed
+    voice: it_IT-paola-medium
+    model: piper
+    response_format: wav
+
+Intent:
+  nointent:
+    type: nointent
+
+Memory:
+  nomem:
+    type: nomem
+
+VAD:
+  silero_vad:
+    type: silero
+
+Prompt:
+  default:
+    type: prompt
+    text: |
+      Sei un assistente vocale italiano. Rispondi sempre in italiano.
+      Sii naturale, conciso e utile.

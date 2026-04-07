@@ -1,0 +1,11 @@
+# Secrets / local config
+data/.config.yaml
+.env
+*.env
+
+# Runtime / temp
+tmp/
+*.log
+
+# OS
+.DS_Store
