@@ -40,6 +40,26 @@ def get_selected_module_name(config: Dict[str, Any], kind: str) -> Any:
     return selected_module.get(kind)
 
 
+def validate_runtime_profile(config: Dict[str, Any], kind: str) -> Dict[str, Any]:
+    profile_configs = config.get(kind, {})
+    if not isinstance(profile_configs, dict):
+        profile_configs = {}
+
+    runtime_profile = get_runtime_profile(config, kind)
+    logical_module_name = get_selected_module_name(config, kind)
+    has_runtime_profile = runtime_profile not in (None, "")
+    is_valid = has_runtime_profile and runtime_profile in profile_configs
+
+    return {
+        "kind": kind,
+        "selected_profile": runtime_profile,
+        "logical_module": logical_module_name,
+        "profile_valid": is_valid,
+        "using_fallback_base_config": not is_valid,
+        "available_profiles": tuple(profile_configs.keys()),
+    }
+
+
 def _add_model_alias(config: Any) -> Dict[str, Any]:
     if not isinstance(config, dict):
         return {}
@@ -116,8 +136,9 @@ def _resolve_profile_config(config: dict, kind: str) -> Dict[str, Any]:
     if not isinstance(base_cfg, dict):
         base_cfg = {}
 
-    runtime_profile = get_runtime_profile(config, kind)
-    if runtime_profile and runtime_profile in profile_configs:
+    validation = validate_runtime_profile(config, kind)
+    runtime_profile = validation["selected_profile"]
+    if validation["profile_valid"]:
         final_cfg = dict(base_cfg)
         final_cfg.update(profile_configs[runtime_profile])
     else:

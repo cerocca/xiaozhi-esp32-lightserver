@@ -6,6 +6,7 @@ from core.utils.config_normalizer import (
     resolve_asr_config,
     resolve_llm_config,
     resolve_tts_config,
+    validate_runtime_profile,
 )
 
 TAG = __name__
@@ -41,6 +42,15 @@ def initialize_modules(
         f"runtime.asr_profile={config['runtime']['asr_profile']}, "
         f"runtime.tts_profile={config['runtime']['tts_profile']}"
     )
+    for kind in ("LLM", "ASR", "TTS"):
+        profile_status = validate_runtime_profile(config, kind)
+        logger.bind(tag=TAG).info(
+            f"{kind} profile validation: "
+            f"selected_profile={profile_status['selected_profile']}, "
+            f"logical_module={profile_status['logical_module']}, "
+            f"profile_valid={profile_status['profile_valid']}, "
+            f"using_fallback_base_config={profile_status['using_fallback_base_config']}"
+        )
 
     modules = {}
 
