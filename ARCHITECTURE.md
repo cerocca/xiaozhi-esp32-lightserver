@@ -154,6 +154,55 @@ Questo file governa:
 - moduli intent/memory/vad
 - endpoint e chiavi compatibili
 
+Per `LLM`, `ASR` e `TTS` il backend usa ora un modello config profile-aware:
+
+- `selected_module.LLM` / `ASR` / `TTS` = selezione logica del modulo o del driver
+- `runtime.llm_profile` / `asr_profile` / `tts_profile` = profilo provider attivo, sorgente preferita usata dai resolver
+- `selected_module.llm` / `asr` / `tts` = input legacy ancora accettati per compatibilità
+- `LLM` / `ASR` / `TTS` = mappe di profili provider nominati
+
+Esempio pratico:
+
+```yaml
+selected_module:
+  LLM: OpenaiLLM
+  ASR: GroqASR
+  TTS: OpenaiTTS
+
+runtime:
+  llm_profile: groq_llama
+  asr_profile: groq_whisper
+  tts_profile: piper_it
+
+LLM:
+  OpenaiLLM:
+    type: openai
+  groq_llama:
+    type: openai
+    model: llama-3.3-70b-versatile
+
+ASR:
+  GroqASR:
+    type: groq
+  groq_whisper:
+    type: groq
+    model_name: whisper-large-v3-turbo
+
+TTS:
+  OpenaiTTS:
+    type: openai
+  piper_it:
+    type: openai
+    model: piper
+```
+
+Comportamento compatibile e sicuro:
+
+- se `runtime.*_profile` manca, la normalizzazione può ancora usare i vecchi `selected_module.llm/asr/tts`
+- se il profilo runtime esiste ed è valido, il resolver usa quel profilo come overlay sul base config del modulo logico
+- se il profilo runtime è mancante o invalido, il backend torna al base config del modulo logico
+- un profilo runtime mancante o invalido non deve causare un hard startup failure da solo
+
 Criticità reale osservata:
 - config incoerente può bloccare lo startup
 - esempio reale:
@@ -171,6 +220,7 @@ Conclusione:
 - volume device non sempre coerente con percezione reale
 - display firmware non ottimizzato
 - config runtime fragile se contiene riferimenti modulo incoerenti
+- i profili runtime invalidi su `LLM` / `ASR` / `TTS` oggi fanno fallback sicuro al modulo logico, ma restano comunque da correggere
 - log con componenti e warning non sempre immediati da leggere
 
 ---

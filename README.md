@@ -119,6 +119,58 @@ Nei log corretti devono comparire eventi tipo:
 - il path corretto della config runtime è **solo** `data/.config.yaml`
 - il file da mettere in GitHub deve essere `.config.example.yaml`, non la config reale con segreti
 
+## Modello config runtime
+
+Per `LLM`, `ASR` e `TTS` il backend supporta ora in modo esplicito un modello a profili:
+
+- `selected_module.LLM` / `ASR` / `TTS` = selezione logica del modulo o driver
+- `runtime.llm_profile` / `asr_profile` / `tts_profile` = profilo provider attivo, sorgente preferita interna
+- `selected_module.llm` / `asr` / `tts` = compatibilità legacy soltanto
+- `LLM` / `ASR` / `TTS` = mappe di profili provider nominati
+
+Esempio della struttura preferita:
+
+```yaml
+selected_module:
+  LLM: OpenaiLLM
+  ASR: GroqASR
+  TTS: OpenaiTTS
+
+runtime:
+  llm_profile: groq_llama
+  asr_profile: groq_whisper
+  tts_profile: piper_it
+
+LLM:
+  OpenaiLLM:
+    type: openai
+  groq_llama:
+    type: openai
+    base_url: https://api.groq.com/openai/v1
+    model: llama-3.3-70b-versatile
+
+ASR:
+  GroqASR:
+    type: groq
+  groq_whisper:
+    type: groq
+    model_name: whisper-large-v3-turbo
+
+TTS:
+  OpenaiTTS:
+    type: openai
+  piper_it:
+    type: openai
+    base_url: http://192.168.1.69:8091/v1
+    model: piper
+```
+
+Compatibilità attuale:
+
+- se `runtime.*_profile` manca, i vecchi `selected_module.llm/asr/tts` possono ancora alimentare la normalizzazione
+- se il profilo runtime selezionato è assente o invalido, il backend non fallisce in hard startup e torna al base config del modulo logico
+- i campi lowercase in `selected_module` restano supportati, ma solo per retrocompatibilità
+
 ## Stato roadmap sintetico
 
 Già fatto:
