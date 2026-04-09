@@ -1,235 +1,118 @@
-# ARCHITECTURE — Xiaozhi ESP32 System
+# Architecture
 
 ## Overview
 
-Sistema distribuito:
+Runtime flow:
 
-**ESP32 → WiFi → WebSocket → Xiaozhi Server → AI services → ritorno audio**
+`ESP32 device -> WebSocket server -> ASR -> LLM -> TTS -> audio back to device`
 
----
+The server process exposes two different network services:
 
-## Pipeline voce
+- a WebSocket service for device sessions
+- an HTTP service for operator checks and auxiliary endpoints
 
-1. ESP32 registra audio
-2. invio via WebSocket al server
-3. server:
-   - VAD (Silero)
-   - ASR (Groq)
-4. testo → LLM (Groq)
-5. risposta → TTS (Piper locale via endpoint OpenAI-compatible)
-6. audio → ESP32
-7. playback sul device
+## Port Map
 
----
+### Port 8000
 
-## Componenti
+- Protocol: WebSocket
+- Purpose: ESP32 device communication
+- Main path: `/xiaozhi/v1/`
+- Behavior on plain HTTP requests: returns `Server is running`
 
-### 1. ESP32
-- firmware Xiaozhi compatibile
-- mic I2S
-- speaker
-- eventuale display
+This is not the health API port.
 
-Nel setup documentato:
-- firmware `2.2.4`
-- modello visto nei log:
-  - `sp-esp32-s3-1.28-box`
+### Port 8003
 
----
+- Protocol: HTTP
+- Purpose: operator-facing HTTP endpoints
+- Main endpoints:
+  - `GET /api/health`
+  - `GET /xiaozhi/ota/`
+  - `POST /xiaozhi/ota/`
+  - `GET /mcp/vision/explain`
+  - `POST /mcp/vision/explain`
 
-### 2. Server Xiaozhi (Sibilla)
+This is the port you must use for JSON health checks.
 
-Esecuzione:
-- Docker Compose
-- container principale:
-  - `xiaozhi-esp32-server`
+## Common Port Mistake
 
-Responsabilità:
-- terminazione WebSocket device
-- orchestrazione pipeline vocale
-- OTA per il device
-- integrazione provider AI
+These two commands are not equivalent:
 
-Moduli osservati nel setup:
-- VAD: Silero
-- ASR: Groq
-- LLM: OpenAI-compatible verso Groq
-- TTS: provider esterno verso Piper locale
+```bash
+curl http://<SERVER_IP>:8000/api/health
+curl http://<SERVER_IP>:8003/api/health
+```
 
-Porte:
-- `8000` → WebSocket
-- `8003` → OTA
+What happens:
 
----
+- on `8000`, the request reaches the WebSocket listener and you do not get the JSON health payload
+- on `8003`, the request reaches the HTTP server and returns the health JSON
 
-### 3. TTS locale (Piper)
+Warning:
 
-Componente separato dal container Xiaozhi.
+If you call `/api/health` on port `8000`, you will NOT get JSON.  
+This is expected.  
+Use port `8003` for HTTP API endpoints.
 
-Caratteristiche:
-- locale su host
-- endpoint OpenAI-compatible
-- persistente via systemd
-- porta `8091`
+For a quick socket-level sanity check, use:
 
-Ruolo:
-- riceve testo dal server Xiaozhi
-- produce audio sintetizzato
-- restituisce audio al server per l'invio al device
+```bash
+curl http://<SERVER_IP>:8000/
+```
 
----
+Expected response:
 
-### 4. Admin UI (opzionale, separata)
-
-Componente esterno:
-
-- progetto: `xiaozhi-admin-ui`
-- esecuzione host-native via systemd
-- non parte della pipeline audio
-
-Ruolo:
-- management
-- osservabilità
-- editing config
-- backup / rollback
-- restart servizi
-- log viewer
-- vista device dai log
-
-Importante:
-- non va confusa con `xiaozhi-esp32-server`
-- non deve introdurre coupling forte col runtime
-
----
-
-## Comunicazione
-
-### Device ↔ Server
-- protocollo: WebSocket
-- audio: Opus / stream device-side
-- config iniziale: OTA HTTP
-
-### Server ↔ Groq
-- modalità OpenAI-compatible
-- usata per:
-  - ASR
-  - LLM
-
-### Server ↔ Piper
-- protocollo: HTTP REST
-- endpoint speech OpenAI-compatible
-
----
-
-## Flusso di boot del device
-
-1. device contatta endpoint OTA
-2. server OTA restituisce configurazione
-3. device apre WebSocket verso server
-4. handshake:
-   - `hello`
-   - `listen`
-   - `mcp`
-5. pipeline voce diventa attiva
-
-Segnali tipici nei log:
-- `OTA请求设备ID`
-- `收到hello消息`
-- `收到listen消息`
-- `收到mcp消息`
-
----
-
-## Configurazione runtime
-
-File fondamentale:
 ```text
-/home/ciru/xiaozhi-esp32-server/data/.config.yaml
+Server is running
 ```
 
-Questo file governa:
-- provider ASR
-- provider LLM
-- provider TTS
-- moduli intent/memory/vad
-- endpoint e chiavi compatibili
+## Runtime Configuration Model
 
-Per `LLM`, `ASR` e `TTS` il backend usa ora un modello config profile-aware:
+The server loads:
 
-- `selected_module.LLM` / `ASR` / `TTS` = selezione logica del modulo o del driver
-- `runtime.llm_profile` / `asr_profile` / `tts_profile` = profilo provider attivo, sorgente preferita usata dai resolver
-- `selected_module.llm` / `asr` / `tts` = input legacy ancora accettati per compatibilità
-- `LLM` / `ASR` / `TTS` = mappe di profili provider nominati
+- base defaults from `server/main/xiaozhi-server/config.yaml`
+- local runtime overrides from `data/.config.yaml`
 
-Esempio pratico:
+Recommended operator workflow:
 
-```yaml
-selected_module:
-  LLM: OpenaiLLM
-  ASR: GroqASR
-  TTS: OpenaiTTS
+- do not edit `server/main/xiaozhi-server/config.yaml` for normal deployments
+- keep deployment-specific values in `data/.config.yaml`
+- version `data/.config.example.yaml`
+- never commit secrets from `data/.config.yaml`
 
-runtime:
-  llm_profile: groq_llama
-  asr_profile: groq_whisper
-  tts_profile: piper_it
+## Minimum External Provider Layout
 
-LLM:
-  OpenaiLLM:
-    type: openai
-  groq_llama:
-    type: openai
-    model: llama-3.3-70b-versatile
+For first boot, use external/API-based providers and a small override file:
 
-ASR:
-  GroqASR:
-    type: groq
-  groq_whisper:
-    type: groq
-    model_name: whisper-large-v3-turbo
+- `selected_module.*` chooses the logical module/driver
+- `runtime.*_profile` chooses the active provider profile
+- `LLM`, `ASR`, and `TTS` contain the named provider configs
 
-TTS:
-  OpenaiTTS:
-    type: openai
-  piper_it:
-    type: openai
-    model: piper
-```
+This keeps the deployment path simple and avoids requiring local model downloads for the first successful install.
 
-Comportamento compatibile e sicuro:
+## Health Endpoint Summary
 
-- se `runtime.*_profile` manca, la normalizzazione può ancora usare i vecchi `selected_module.llm/asr/tts`
-- se il profilo runtime esiste ed è valido, il resolver usa quel profilo come overlay sul base config del modulo logico
-- se il profilo runtime è mancante o invalido, il backend torna al base config del modulo logico
-- un profilo runtime mancante o invalido non deve causare un hard startup failure da solo
+`GET /api/health` returns:
 
-Criticità reale osservata:
-- config incoerente può bloccare lo startup
-- esempio reale:
-  - `KeyError: 'nointentdd'`
+- backward-compatible top-level keys:
+  - `llm`
+  - `asr`
+  - `tts`
+  - `device`
+- additive `details` object for diagnostics
 
-Conclusione:
-- la config è parte critica del sistema
-- ogni modifica va verificata subito con restart + log
+Meaning of `device`:
 
----
+- `connected` means at least one device currently has an active WebSocket session
+- `disconnected` means no device is currently connected
+- `"device": "disconnected"` is normal when no ESP32 device is currently connected
 
-## Criticità note
+## Operator View
 
-- latenza dipendente da Groq
-- volume device non sempre coerente con percezione reale
-- display firmware non ottimizzato
-- config runtime fragile se contiene riferimenti modulo incoerenti
-- i profili runtime invalidi su `LLM` / `ASR` / `TTS` oggi fanno fallback sicuro al modulo logico, ma restano comunque da correggere
-- log con componenti e warning non sempre immediati da leggere
+For a fresh deployment, the important mental model is:
 
----
-
-## Obiettivo architetturale
-
-- ridurre dipendenze cloud non necessarie
-- mantenere stabilità del runtime
-- restare compatibili con hardware custom futuri
-- conservare un confine pulito tra:
-  - runtime voce
-  - tooling admin
+1. port `8000` proves the WebSocket listener is up
+2. port `8003` proves the HTTP endpoints are up
+3. `/api/health` validates provider reachability and current device connection state
+4. OTA points devices at the WebSocket endpoint used at runtime

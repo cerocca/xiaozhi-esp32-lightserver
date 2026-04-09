@@ -1,188 +1,86 @@
-# Xiaozhi ESP32 Server (Sibilla)
+# Xiaozhi ESP32 Lightserver
 
-![Status](https://img.shields.io/badge/status-working-green)
-![ASR](https://img.shields.io/badge/ASR-Groq-blue)
-![LLM](https://img.shields.io/badge/LLM-Groq-blue)
-![TTS](https://img.shields.io/badge/TTS-Piper-orange)
-![Device](https://img.shields.io/badge/device-ESP32--S3-lightgrey)
+Server-side deployment notes for the `xiaozhi-esp32-lightserver` / `xiaozhi-server` stack.
 
-Server vocale locale/LAN per device ESP32-S3 XiaoZhi-like, con pipeline completa:
+This repository is documented for a fresh Linux server install with Docker Compose as the primary first-boot path.
 
-**ESP32 → Xiaozhi Server → Groq (ASR + LLM) → Piper locale (TTS) → audio sul device**
+## Start Here
 
-## Stato attuale verificato
+- Read `SETUP.md` for the full deployment guide.
+- Read `ARCHITECTURE.md` for the port map and runtime flow.
+- Use `data/.config.example.yaml` as the starting point for `data/.config.yaml`.
 
-Funzionano:
+## Core Ports
 
-- OTA del device
-- WebSocket verso il server
-- ASR via Groq
-- LLM via Groq
-- TTS via Piper locale esposto come endpoint OpenAI-compatible
-- riproduzione audio sul device
-- controllo volume del device via voce
+- `8000` = WebSocket server for ESP32 devices
+- `8003` = HTTP server for `/api/health`, OTA, and vision endpoints
 
-## Setup di riferimento
+Important:
 
-Host usato nella documentazione:
+- `http://<SERVER_IP>:8000/` returns plain text `Server is running`
+- `http://<SERVER_IP>:8003/api/health` returns JSON
+- testing `/api/health` on port `8000` is a mistake and does not validate the HTTP server
 
-- host Linux: `Sibilla`
-- IP LAN: `192.168.1.69`
+Warning:
 
-Percorsi usati:
+If you call `/api/health` on port `8000`, you will NOT get JSON.  
+This is expected.  
+Use port `8003` for HTTP API endpoints.
 
-- repo server: `/home/ciru/xiaozhi-esp32-server`
-- config runtime: `/home/ciru/xiaozhi-esp32-server/data/.config.yaml`
-- config example da versionare: `/home/ciru/xiaozhi-esp32-server/data/.config.example.yaml`
-- Piper API: servizio `piper-api`
-- Admin UI opzionale: `/home/ciru/xiaozhi-admin-ui`
+## Quick Operator Flow
 
-## Endpoints usati nel setup documentato
+1. Install Docker Engine and the Docker Compose plugin on the Linux server.
+2. Clone or copy this repository to `<PROJECT_DIR>`.
+3. Copy `data/.config.example.yaml` to `data/.config.yaml`.
+4. Replace all placeholders in `data/.config.yaml`.
+5. Start the stack with `docker compose up -d`.
+6. Verify ports `8000` and `8003` are listening.
+7. Check `GET /api/health` on port `8003`.
+8. Configure the ESP32 device to use `http://<SERVER_IP>:8003/xiaozhi/ota/`.
+9. Confirm the device opens a WebSocket connection to `ws://<SERVER_IP>:8000/xiaozhi/v1/`.
 
-- OTA: `http://192.168.1.69:8003/xiaozhi/ota/`
-- WebSocket: `ws://192.168.1.69:8000/xiaozhi/v1/`
-- Piper API health: `http://127.0.0.1:8091/health`
-- Piper API speech: `http://192.168.1.69:8091/v1/audio/speech`
+The root `docker-compose.yml` defaults container timezone to `UTC`. Set `TZ` before startup if you want a different local timezone.
 
-## Project Boundary
+## First Verification Commands
 
-- `xiaozhi-esp32-server` = runtime voce
-- `xiaozhi-admin-ui` = tool opzionale di management
-
-Il server funziona anche senza Admin UI.
-
-L'Admin UI può aiutare con:
-- dashboard servizi
-- editor config
-- backup / rollback
-- restart Xiaozhi e Piper
-- log viewer
-- device list dai log
-
-Ma:
-- non fa parte della pipeline audio
-- non è richiesta dal runtime
-- non deve introdurre coupling forte col server
-
-## Quick start
-
-1. Segui `SETUP.md`
-2. Copia `data/.config.example.yaml` in `data/.config.yaml`
-3. Inserisci le tue chiavi e gli endpoint reali
-4. Avvia `xiaozhi-esp32-server`
-5. Verifica che `piper-api` sia attivo
-6. Configura il device con OTA URL
-7. Dì `Ciao` e verifica i log
-
-## Documentazione
-
-- `SETUP.md` → installazione e ricostruzione handoff-ready
-- `ARCHITECTURE.md` → architettura tecnica e confine dei componenti
-- `TODO.md` → attività aperte e roadmap
-- `PROJECT_RULES.md` → regole operative del progetto
-
-## Verifiche rapide
-
-### Piper
 ```bash
-systemctl is-active piper-api
-curl -s http://127.0.0.1:8091/health ; echo
-```
-
-Atteso:
-```text
-active
-{"ok":true}
-```
-
-### Xiaozhi
-```bash
-cd /home/ciru/xiaozhi-esp32-server
+cd <PROJECT_DIR>
 docker compose ps
-docker compose logs --tail=50
+docker compose logs --tail=100
+curl -s http://127.0.0.1:8000/
+curl -s http://127.0.0.1:8003/api/health
 ```
 
-### Device
-Nei log corretti devono comparire eventi tipo:
-- `OTA请求设备ID`
-- `收到hello消息`
-- `收到listen消息`
-- `收到mcp消息`
-- `识别文本`
-- `语音生成成功`
+Expected:
 
-## Note importanti
+- `docker compose ps` shows `xiaozhi-esp32-server` as `Up`
+- `curl http://127.0.0.1:8000/` returns `Server is running`
+- `curl http://127.0.0.1:8003/api/health` returns JSON with top-level `llm`, `asr`, `tts`, and `device`
 
-- Groq è usato in modalità OpenAI-compatible
-- Piper gira locale su Sibilla ed è persistente via systemd
-- i log del container mostrano anche IP Docker interni (`172.x`), ma il device usa l'IP LAN reale dell'host
-- il path corretto della config runtime è **solo** `data/.config.yaml`
-- il file da mettere in GitHub deve essere `.config.example.yaml`, non la config reale con segreti
+## Quick Verification (30 Seconds)
 
-## Modello config runtime
+```bash
+curl http://127.0.0.1:8000/
+# expected: Server is running
 
-Per `LLM`, `ASR` e `TTS` il backend supporta ora in modo esplicito un modello a profili:
+curl http://127.0.0.1:8003/api/health
+# expected: JSON response
 
-- `selected_module.LLM` / `ASR` / `TTS` = selezione logica del modulo o driver
-- `runtime.llm_profile` / `asr_profile` / `tts_profile` = profilo provider attivo, sorgente preferita interna
-- `selected_module.llm` / `asr` / `tts` = compatibilità legacy soltanto
-- `LLM` / `ASR` / `TTS` = mappe di profili provider nominati
-
-Esempio della struttura preferita:
-
-```yaml
-selected_module:
-  LLM: OpenaiLLM
-  ASR: GroqASR
-  TTS: OpenaiTTS
-
-runtime:
-  llm_profile: groq_llama
-  asr_profile: groq_whisper
-  tts_profile: piper_it
-
-LLM:
-  OpenaiLLM:
-    type: openai
-  groq_llama:
-    type: openai
-    base_url: https://api.groq.com/openai/v1
-    model: llama-3.3-70b-versatile
-
-ASR:
-  GroqASR:
-    type: groq
-  groq_whisper:
-    type: groq
-    model_name: whisper-large-v3-turbo
-
-TTS:
-  OpenaiTTS:
-    type: openai
-  piper_it:
-    type: openai
-    base_url: http://192.168.1.69:8091/v1
-    model: piper
+curl -s http://127.0.0.1:8003/api/health | jq
+# expected: formatted JSON response
 ```
 
-Compatibilità attuale:
+If `"device": "disconnected"` appears in the health response, that is normal when no ESP32 device is currently connected.
 
-- se `runtime.*_profile` manca, i vecchi `selected_module.llm/asr/tts` possono ancora alimentare la normalizzazione
-- se il profilo runtime selezionato è assente o invalido, il backend non fallisce in hard startup e torna al base config del modulo logico
-- i campi lowercase in `selected_module` restano supportati, ma solo per retrocompatibilità
+## Documentation Map
 
-## Stato roadmap sintetico
+- `SETUP.md` - Docker-first Linux install, config, verification, troubleshooting
+- `ARCHITECTURE.md` - architecture, ports, and endpoint roles
+- `data/.config.example.yaml` - minimal example runtime override file
+- `server/README.md` - upstream server project docs, including health endpoint details
 
-Già fatto:
-- server Xiaozhi funzionante su Sibilla
-- OTA funzionante
-- WebSocket funzionante
-- Groq ASR funzionante
-- Groq LLM funzionante
-- Piper locale integrato
-- pipeline voce completa funzionante
+## Scope Notes
 
-In corso / successivi:
-- mantenere allineata la documentazione server
-- continuare evoluzione del progetto separato `xiaozhi-admin-ui`
-- migliorare gestione provider/modelli lato configurazione
+- Documentation is server-side only.
+- Docker Compose is the recommended first-boot deployment path.
+- Native Python startup is treated as an advanced/dev scenario, not the main install path.

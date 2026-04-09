@@ -1,44 +1,23 @@
-# Example config for xiaozhi-esp32-server
-# Copy this file to:
-#   data/.config.yaml
-# Then replace placeholder values with real ones.
-#
-# IMPORTANT:
-# - Do not commit secrets in data/.config.yaml
-# - Keep this example file versioned
-# - The real runtime path is:
-#   /home/ciru/xiaozhi-esp32-server/data/.config.yaml
+# Copy this file to data/.config.yaml and replace every placeholder.
+# Keep this example file in version control.
+# Do not commit secrets from data/.config.yaml.
+
+server:
+  websocket: ws://<SERVER_IP>:8000/xiaozhi/v1/
+  vision_explain: http://<SERVER_IP>:8003/mcp/vision/explain
 
 selected_module:
-  llm: groq_llm
-  asr: groq_asr
-  tts: piper_tts
-  intent: nointent
-  memory: nomem
-  vad: silero_vad
+  VAD: SileroVAD
+  ASR: OpenaiASR
+  LLM: AliLLM
+  TTS: OpenAITTS
+  Memory: nomem
+  Intent: nointent
 
-LLM:
-  groq_llm:
-    type: openai
-    base_url: https://api.groq.com/openai/v1
-    api_key: YOUR_GROQ_API_KEY
-    model: llama-3.1-8b-instant
-    temperature: 0.7
-
-ASR:
-  groq_asr:
-    type: groq
-    api_key: YOUR_GROQ_API_KEY
-    model: whisper-large-v3-turbo
-
-TTS:
-  piper_tts:
-    type: openai
-    base_url: http://YOUR_SERVER_IP:8091/v1
-    api_key: not-needed
-    voice: it_IT-paola-medium
-    model: piper
-    response_format: wav
+runtime:
+  asr_profile: openai_asr
+  llm_profile: openai_llm
+  tts_profile: openai_tts
 
 Intent:
   nointent:
@@ -48,13 +27,37 @@ Memory:
   nomem:
     type: nomem
 
-VAD:
-  silero_vad:
-    type: silero
+ASR:
+  OpenaiASR:
+    type: openai
+  openai_asr:
+    type: openai
+    api_key: <OPENAI_API_KEY>
+    base_url: https://api.openai.com/v1/audio/transcriptions
+    model_name: gpt-4o-mini-transcribe
+    output_dir: tmp/
 
-Prompt:
-  default:
-    type: prompt
-    text: |
-      Sei un assistente vocale italiano. Rispondi sempre in italiano.
-      Sii naturale, conciso e utile.
+LLM:
+  AliLLM:
+    type: openai
+  openai_llm:
+    type: openai
+    api_key: <OPENAI_API_KEY>
+    base_url: https://api.openai.com/v1
+    model_name: gpt-4o-mini
+
+TTS:
+  OpenAITTS:
+    type: openai
+  openai_tts:
+    type: openai
+    api_key: <OPENAI_API_KEY>
+    api_url: https://api.openai.com/v1/audio/speech
+    model: tts-1
+    voice: alloy
+    speed: 1
+    output_dir: tmp/
+
+prompt: |
+  You are a concise, natural voice assistant.
+  Reply clearly and keep responses short unless the user asks for detail.

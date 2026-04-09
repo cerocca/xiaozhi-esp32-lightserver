@@ -8,7 +8,7 @@ services:
     security_opt:
       - seccomp:unconfined
     environment:
-      - TZ=Europe/Rome
+      - TZ=${TZ:-UTC}
     ports:
       - "8000:8000"
       - "8003:8003"

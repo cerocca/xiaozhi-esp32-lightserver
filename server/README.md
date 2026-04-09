@@ -234,6 +234,18 @@ This project provides the following testing tools to help you verify the system 
 
 `xiaozhi-server` exposes a lightweight runtime health endpoint at `GET /api/health`.
 
+Port note:
+
+- call this endpoint on the HTTP server port, typically `8003`
+- do not test it on the WebSocket port `8000`
+- plain HTTP requests sent to port `8000` return `Server is running`
+
+Warning:
+
+If you call `/api/health` on port `8000`, you will NOT get JSON.  
+This is expected.  
+Use port `8003` for HTTP API endpoints.
+
 This endpoint remains backward-compatible for existing callers such as the Admin UI. The top-level response is unchanged:
 
 ```json
@@ -307,8 +319,10 @@ Runtime behavior notes:
 - LLM health uses the resolved runtime LLM configuration and sends an `Authorization` header when an API key is available.
 - Health checks stay lightweight: low timeout, no retry, no caching, no async expansion.
 - `device.status` reflects the current websocket connection state.
+- `"device": "disconnected"` is normal when no ESP32 device is currently connected.
 - `device.last_seen` and `device.connection_duration` remain `null` unless those values are already easily available from runtime state.
 - TTS diagnostics report the final probe result only. The implementation may try `/health` first and then fall back to the base URL, but the response reports only the final attempted endpoint.
+- Any HTTP status below `500` is currently mapped to top-level `ok`, so some ASR or TTS providers may return `404` or `405` in `details.*.http_status` while still reporting `status: ok`.
 
 ---
 ## Feature List ✨
