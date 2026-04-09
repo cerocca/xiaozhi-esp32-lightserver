@@ -1,52 +1,52 @@
-# TODO — Xiaozhi ESP32 Server
+# TODO - Xiaozhi ESP32 Server
 
-## Priorità alta
+## High Priority
 
-- [ ] Tenere allineata la documentazione server con lo stato reale
-- [ ] Rifinire la gestione config per provider/modelli lato runtime
-- [ ] Capire e correggere il problema orario / offset
-- [ ] Fix display (render rotondo vs quadrato)
+- [ ] Keep the server documentation aligned with the real runtime state
+- [ ] Refine runtime config handling for providers and model profiles
+- [ ] Understand and fix the timezone / offset issue
+- [ ] Fix display rendering differences (round vs square)
 
-## Miglioramenti importanti
+## Important Improvements
 
-- [ ] Logging più leggibile
-- [ ] Miglior gestione errori Groq (rate limit / fallback)
-- [ ] Valutare endpoint o hook più puliti per stato device
-- [ ] Ridurre warning/config noise nei log MCP e voiceprint
+- [ ] Make logging easier to read
+- [ ] Improve Groq error handling (rate limit / fallback)
+- [ ] Evaluate cleaner endpoints or hooks for device state
+- [ ] Reduce MCP and voiceprint warning/config noise in logs
 
-## Integrazione con tooling admin
+## Admin Tooling Integration
 
-- [x] Admin UI separata esistente (`xiaozhi-admin-ui`)
-- [ ] Mantenere chiaro il confine tra runtime server e admin tooling
-- [ ] Valutare piccoli hook non invasivi che aiutino osservabilità e management
+- [x] Separate Admin UI project exists (`xiaozhi-admin-ui`)
+- [ ] Keep the boundary between runtime server and admin tooling clear
+- [ ] Evaluate small non-invasive hooks that improve observability and management
 
-## Evoluzione progetto
+## Project Evolution
 
-- [ ] Supporto LLM locale (Ollama)
-- [ ] Memoria conversazione
-- [ ] Wake word migliorata
-- [ ] Multi-device support più robusto
+- [ ] Local LLM support (Ollama)
+- [ ] Conversation memory
+- [ ] Improved wake word handling
+- [ ] More robust multi-device support
 
-## Idee future
+## Future Ideas
 
-- [ ] UI display ESP32
-- [ ] Integrazione Home Assistant
-- [ ] Voice personality custom
-- [ ] Supporto nativo Anthropic nel backend Xiaozhi (da valutare solo se la compatibility layer OpenAI risulta limitante)
+- [ ] ESP32 display UI
+- [ ] Home Assistant integration
+- [ ] Custom voice personality
+- [ ] Native Anthropic support in the Xiaozhi backend, only if the OpenAI compatibility layer proves limiting
 
-## Bug / stranezze osservate
+## Bugs / Observed Oddities
 
-- [ ] Device volume non sempre coerente con il valore percepito
-- [ ] Possibili reconnect aggressivi
-- [ ] Warning MCP / voiceprint da capire e ripulire
-- [ ] Verificare se ci sono edge case di restart/config invalidi
+- [ ] Device volume is not always consistent with perceived loudness
+- [ ] Possible aggressive reconnect behavior
+- [ ] MCP / voiceprint warnings need review and cleanup
+- [ ] Verify restart/config-invalid edge cases
 
-## Fatto
+## Done
 
-- [x] Server su Sibilla
-- [x] OTA funzionante
-- [x] WebSocket ok
-- [x] Groq ASR funzionante
-- [x] Groq LLM funzionante
-- [x] Piper TTS locale integrato
-- [x] Pipeline voce completa funzionante
+- [x] Server running
+- [x] OTA working
+- [x] WebSocket working
+- [x] Groq ASR working
+- [x] Groq LLM working
+- [x] Local Piper TTS integrated
+- [x] End-to-end voice pipeline working

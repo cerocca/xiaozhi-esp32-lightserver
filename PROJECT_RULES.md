@@ -1,59 +1,49 @@
-# PROJECT RULES — Xiaozhi ESP32 Server
+# Project Rules - Xiaozhi ESP32 Server
 
-## Regola fondamentale
-I file Markdown (`.md`) vengono aggiornati **solo su richiesta esplicita dell'utente**.
+## Fundamental Rule
 
----
+Markdown files (`.md`) are updated only on explicit user request.
 
-## Filosofia del progetto
+## Project Philosophy
 
-- non rompere ciò che funziona
-- preferire semplicità e controllo
-- evitare dipendenze inutili o chiuse
-- design stile RevK:
-  - pulito
-  - stabile
-  - comprensibile
+- do not break what already works
+- prefer simplicity and control
+- avoid unnecessary or closed dependencies
+- keep the design clean, stable, and understandable
 
----
+## Working Method
 
-## Metodo di lavoro
+- working first, improvement second
+- every change must be verifiable
+- debug before adding new features
+- logs stay high priority
+- keep changes small and reversible
 
-- prima funzionante, poi miglioramento
-- ogni modifica deve essere verificabile
-- debug prima delle feature nuove
-- log sempre prioritari
-- modifiche piccole e reversibili
+## What To Avoid
 
----
+- unnecessary refactors
+- multiple untested changes at once
+- introducing unnecessary complexity
+- coupling the runtime server too tightly to admin tooling
 
-## Cosa evitare
+## Boundary With Admin UI
 
-- refactor inutili
-- cambi multipli non testati
-- introduzione di complessità non necessaria
-- accoppiare troppo runtime server e tooling admin
+`xiaozhi-admin-ui` is separate from `xiaozhi-esp32-server`.
 
----
+Rule:
 
-## Confine con Admin UI
+- the server remains the voice/runtime backend
+- the Admin UI remains management tooling
 
-Il progetto `xiaozhi-admin-ui` è separato da `xiaozhi-esp32-server`.
+Avoid:
 
-Regola:
-- il server resta il runtime voce
-- l'Admin UI resta il tooling di management
+- moving runtime logic into the Admin UI
+- treating the Admin UI as part of the server runtime
+- introducing strong server dependencies on the UI
 
-Da evitare:
-- spostare logica runtime dentro l'Admin UI
-- trattare l'Admin UI come parte del server
-- introdurre dipendenze forti del server dalla UI
+## Approach
 
----
-
-## Approccio
-
-- iterativo
-- conservativo
-- orientato a sistema reale, non demo
-- documentazione e stato reale devono restare coerenti
+- iterative
+- conservative
+- oriented toward a real system, not a demo
+- documentation and real runtime state must stay aligned
