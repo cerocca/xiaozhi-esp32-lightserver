@@ -100,7 +100,9 @@ def check_tts(config):
 
 
 def check_device(server=None):
-    ws_server = getattr(server, "_ws_server", None)
+    # Accept either the WebSocketServer wrapper or the underlying websockets server
+    # so health checks keep working regardless of which object is passed in.
+    ws_server = getattr(server, "_ws_server", None) or server
     connections = getattr(ws_server, "connections", None)
     is_connected = bool(connections)
     return {
