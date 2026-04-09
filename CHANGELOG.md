@@ -2,20 +2,27 @@
 
 ## v0.1.0
 
-Initial stable deployment version.
+Initial stable deployment baseline for this repository.
+
+This project is derived from the `xinnan-tech/xiaozhi-esp32-server` codebase and adapts the upstream server structure for a lighter deployment-focused setup.
 
 ### Added
 - Docker-first deployment flow
-- Clear separation of ports (8000 websocket, 8003 HTTP)
-- /api/health diagnostic details (status, reason, http_status, endpoint)
-- Quick verification commands
-- Deployment and setup documentation
+- Clear separation of ports: `8000` for WebSocket, `8003` for HTTP API endpoints
+- Backward-compatible `/api/health` top-level contract: `llm`, `asr`, `tts`, `device`
+- Additive `/api/health` diagnostic details: `status`, `reason`, `http_status`, `endpoint`
+- Quick verification commands and deployment verification flow
+- Host-agnostic deployment and setup documentation
+- Stable SERVER <-> ADMIN UI integration contract
+- `/api/health` documented as the backend runtime source of truth
 
 ### Fixed
 - Confusion between websocket and HTTP endpoints
 - Missing health diagnostics context
+- Deployment guidance that depended on host-specific assumptions
 
 ### Notes
 - External providers used for first boot
 - Local model setup documented as advanced scenario
-
+- Plain HTTP requests sent to port `8000` return `Server is running`; this is expected
+- Admin UI should use `http://<SERVER_HOST>:<HTTP_PORT>/api/health`
