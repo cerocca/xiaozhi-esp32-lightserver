@@ -21,9 +21,18 @@ def _normalize_http_url(url, path=""):
     return urlunparse((scheme, parsed.netloc, path or parsed.path or "/", "", "", ""))
 
 
-def _is_endpoint_alive(url, headers=None):
+def _build_http_result(status, reason, http_status=None, endpoint=None):
+    return {
+        "status": status,
+        "reason": reason,
+        "http_status": http_status,
+        "endpoint": endpoint,
+    }
+
+
+def _check_http_endpoint(url, headers=None):
     if not url:
-        return False
+        return _build_http_result("error", "connection_error", endpoint=url)
     try:
         response = requests.get(
             url,
@@ -31,9 +40,22 @@ def _is_endpoint_alive(url, headers=None):
             allow_redirects=False,
             headers=headers or {"User-Agent": "health-check"},
         )
-        return 100 <= response.status_code < 500
+        status_code = response.status_code
+        if status_code in (401, 403):
+            return _build_http_result(
+                "error", "auth_error", http_status=status_code, endpoint=url
+            )
+        if status_code >= 500:
+            return _build_http_result(
+                "error", "http_error", http_status=status_code, endpoint=url
+            )
+        return _build_http_result("ok", "ok", http_status=status_code, endpoint=url)
+    except requests.Timeout:
+        return _build_http_result("error", "timeout", endpoint=url)
+    except requests.ConnectionError:
+        return _build_http_result("error", "connection_error", endpoint=url)
     except requests.RequestException:
-        return False
+        return _build_http_result("error", "connection_error", endpoint=url)
 
 
 def check_llm(config):
@@ -42,14 +64,14 @@ def check_llm(config):
     api_key = provider_config.get("api_key")
     url = _normalize_http_url(base_url)
     if not url:
-        return "error"
+        return _build_http_result("error", "connection_error", endpoint=url)
     if url.endswith("/"):
         url = url.rstrip("/")
     url = url + "/models"
     headers = {"User-Agent": "health-check"}
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
-    return "ok" if _is_endpoint_alive(url, headers=headers) else "error"
+    return _check_http_endpoint(url, headers=headers)
 
 
 def check_asr(config):
@@ -59,20 +81,31 @@ def check_asr(config):
         or provider_config.get("api_url")
         or provider_config.get("url")
     )
-    return "ok" if _is_endpoint_alive(url) else "error"
+    return _check_http_endpoint(url)
 
 
 def check_tts(config):
     provider_config = _get_provider_config(config, "TTS")
-    base_url = provider_config.get("base_url") or provider_config.get("api_url") or provider_config.get("url")
+    base_url = (
+        provider_config.get("base_url")
+        or provider_config.get("api_url")
+        or provider_config.get("url")
+    )
     health_url = _normalize_http_url(base_url, "/health")
-    if _is_endpoint_alive(health_url):
-        return "ok"
+    health_result = _check_http_endpoint(health_url)
+    if health_result["status"] == "ok":
+        return health_result
     url = _normalize_http_url(base_url)
-    return "ok" if _is_endpoint_alive(url) else "error"
+    return _check_http_endpoint(url)
 
 
 def check_device(server=None):
     ws_server = getattr(server, "_ws_server", None)
     connections = getattr(ws_server, "connections", None)
-    return "connected" if connections else "disconnected"
+    is_connected = bool(connections)
+    return {
+        "status": "connected" if is_connected else "disconnected",
+        "reason": "connected" if is_connected else "disconnected",
+        "last_seen": None,
+        "connection_duration": None,
+    }

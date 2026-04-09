@@ -230,6 +230,87 @@ This project provides the following testing tools to help you verify the system 
 > 💡 Note: When testing model speed, only models with configured keys will be tested.
 
 ---
+## Runtime Health Endpoint
+
+`xiaozhi-server` exposes a lightweight runtime health endpoint at `GET /api/health`.
+
+This endpoint remains backward-compatible for existing callers such as the Admin UI. The top-level response is unchanged:
+
+```json
+{
+  "llm": "ok",
+  "asr": "ok",
+  "tts": "ok",
+  "device": "connected"
+}
+```
+
+An optional additive `details` field is now included for diagnostic use:
+
+```json
+{
+  "llm": "ok",
+  "asr": "ok",
+  "tts": "ok",
+  "device": "connected",
+  "details": {
+    "llm": {
+      "status": "ok",
+      "reason": "ok",
+      "http_status": 200,
+      "endpoint": "https://api.groq.com/openai/v1/models"
+    },
+    "asr": {
+      "status": "ok",
+      "reason": "ok",
+      "http_status": 200,
+      "endpoint": "http://asr-service.local/status"
+    },
+    "tts": {
+      "status": "ok",
+      "reason": "ok",
+      "http_status": 200,
+      "endpoint": "http://127.0.0.1:8091/health"
+    },
+    "device": {
+      "status": "connected",
+      "reason": "connected",
+      "last_seen": null,
+      "connection_duration": null
+    }
+  }
+}
+```
+
+For `llm`, `asr`, and `tts`, the diagnostic fields mean:
+
+| Field | Meaning |
+|:---|:---|
+| `status` | `ok` or `error` |
+| `reason` | One of `ok`, `timeout`, `connection_error`, `auth_error`, `http_error` |
+| `http_status` | HTTP status code when a response was received, otherwise `null` |
+| `endpoint` | The final endpoint URL that was probed when available |
+
+Reason mapping rules:
+
+| Condition | Reported `reason` | Top-level status |
+|:---|:---|:---|
+| Request timeout | `timeout` | `error` |
+| Connection failure or request exception before response | `connection_error` | `error` |
+| HTTP `401` or `403` | `auth_error` | `error` |
+| HTTP `>= 500` | `http_error` | `error` |
+| Any other HTTP `< 500` | `ok` | `ok` |
+
+Runtime behavior notes:
+
+- The endpoint uses real runtime checks rather than static configuration.
+- LLM health uses the resolved runtime LLM configuration and sends an `Authorization` header when an API key is available.
+- Health checks stay lightweight: low timeout, no retry, no caching, no async expansion.
+- `device.status` reflects the current websocket connection state.
+- `device.last_seen` and `device.connection_duration` remain `null` unless those values are already easily available from runtime state.
+- TTS diagnostics report the final probe result only. The implementation may try `/health` first and then fall back to the base URL, but the response reports only the final attempted endpoint.
+
+---
 ## Feature List ✨
 ### Implemented ✅
 ![请参考-全模块安装架构图](docs/images/deploy2.png)
