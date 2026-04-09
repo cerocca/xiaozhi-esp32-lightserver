@@ -27,4 +27,15 @@ If you call `/api/health` on port `8000`, you will NOT get JSON.
 This is expected.  
 Use port `8003` for HTTP API endpoints.
 
+Stable integration endpoints:
+
+- health endpoint: `http://<SERVER_HOST>:<HTTP_PORT>/api/health`
+- OTA endpoint: `http://<SERVER_HOST>:<HTTP_PORT>/xiaozhi/ota/`
+- device WebSocket endpoint: `ws://<SERVER_HOST>:<WS_PORT>/xiaozhi/v1/`
+
+Portability note:
+
+- service names, script paths, and deployment layout may vary by host
+- use placeholders such as `<SERVER_HOST>`, `<HTTP_PORT>`, and `<WS_PORT>` in deployment examples
+
 Native Python startup and more specialized deployment variants should be treated as advanced scenarios, not as the default first-install path.

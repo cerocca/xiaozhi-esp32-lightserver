@@ -27,6 +27,27 @@ If you call `/api/health` on port `8000`, you will NOT get JSON.
 This is expected.  
 Use port `8003` for HTTP API endpoints.
 
+## SERVER <-> ADMIN UI Integration Contract
+
+Stable integration endpoints:
+
+- health endpoint: `http://<SERVER_HOST>:<HTTP_PORT>/api/health`
+- OTA endpoint: `http://<SERVER_HOST>:<HTTP_PORT>/xiaozhi/ota/`
+- device WebSocket endpoint: `ws://<SERVER_HOST>:<WS_PORT>/xiaozhi/v1/`
+
+Contract notes:
+
+- Admin UI must use the HTTP port for `/api/health`
+- top-level `llm`, `asr`, `tts`, and `device` are backward-compatible
+- `details` is additive, and Admin UI may consume `details.*` when present
+- `"device": "disconnected"` is normal when no ESP32 device is currently connected
+- `/api/health` is the source of truth for backend runtime status
+
+Portability notes:
+
+- service names, script paths, and deployment layout may vary by host
+- treat any names or paths in the docs as examples unless explicitly required by the runtime
+
 ## Quick Operator Flow
 
 1. Install Docker Engine and the Docker Compose plugin on the Linux server.

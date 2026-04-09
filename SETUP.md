@@ -62,8 +62,24 @@ Run these steps in order:
 5. Check container status and logs.
 6. Verify port `8000` and port `8003`.
 7. Verify `GET /api/health` on port `8003`.
-8. Configure the ESP32 device to use `http://<SERVER_IP>:8003/xiaozhi/ota/`.
-9. Confirm the device connects to `ws://<SERVER_IP>:8000/xiaozhi/v1/`.
+8. Configure the ESP32 device to use `http://<SERVER_HOST>:8003/xiaozhi/ota/`.
+9. Confirm the device connects to `ws://<SERVER_HOST>:8000/xiaozhi/v1/`.
+
+### Stable Integration Contract
+
+Use these endpoints as the stable SERVER <-> ADMIN UI integration surface:
+
+- health endpoint: `http://<SERVER_HOST>:<HTTP_PORT>/api/health`
+- OTA endpoint: `http://<SERVER_HOST>:<HTTP_PORT>/xiaozhi/ota/`
+- device WebSocket endpoint: `ws://<SERVER_HOST>:<WS_PORT>/xiaozhi/v1/`
+
+Important:
+
+- Admin UI must use the HTTP port for `/api/health`
+- top-level `llm`, `asr`, `tts`, and `device` are backward-compatible
+- `details` is additive, and UI consumers may read `details.*` when present
+- HTTP status mapping rules are defined in the health endpoint section below
+- `"device": "disconnected"` is normal when no ESP32 device is currently connected
 
 ## 4. Install the Project
 
@@ -79,6 +95,11 @@ Replace:
 
 - `<REPO_URL>` with your repository URL
 - `/opt/xiaozhi-esp32-lightserver` with your preferred `<PROJECT_DIR>`
+
+Portability note:
+
+- service names, script paths, and deployment layout may vary by host
+- examples in this guide use placeholders and should not be treated as required local names
 
 ## 5. Prepare the Runtime Config
 
@@ -127,8 +148,8 @@ This example keeps the deployment path simple by using external/API-based provid
 
 ```yaml
 server:
-  websocket: ws://<SERVER_IP>:8000/xiaozhi/v1/
-  vision_explain: http://<SERVER_IP>:8003/mcp/vision/explain
+  websocket: ws://<SERVER_HOST>:8000/xiaozhi/v1/
+  vision_explain: http://<SERVER_HOST>:8003/mcp/vision/explain
 
 selected_module:
   VAD: SileroVAD
@@ -337,7 +358,9 @@ Important:
 
 - top-level keys are backward-compatible
 - `details` is additive
+- Admin UI may safely consume `details.*` when present
 - `"device": "disconnected"` is normal when no ESP32 device is currently connected
+- if UI-side local checks disagree with `/api/health`, treat `/api/health` as the source of truth for backend runtime status
 
 ### 7.5 OTA Check
 
@@ -348,7 +371,7 @@ curl -i http://127.0.0.1:8003/xiaozhi/ota/
 Use the exact OTA URL on the ESP32 device:
 
 ```text
-http://<SERVER_IP>:8003/xiaozhi/ota/
+http://<SERVER_HOST>:8003/xiaozhi/ota/
 ```
 
 ### 7.6 Device Connection Check

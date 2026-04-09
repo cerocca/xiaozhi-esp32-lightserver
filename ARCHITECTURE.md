@@ -108,6 +108,27 @@ Meaning of `device`:
 - `disconnected` means no device is currently connected
 - `"device": "disconnected"` is normal when no ESP32 device is currently connected
 
+## Integration Surface
+
+Stable integration endpoints:
+
+- health endpoint: `http://<SERVER_HOST>:<HTTP_PORT>/api/health`
+- OTA endpoint: `http://<SERVER_HOST>:<HTTP_PORT>/xiaozhi/ota/`
+- device WebSocket endpoint: `ws://<SERVER_HOST>:<WS_PORT>/xiaozhi/v1/`
+
+Integration notes:
+
+- Admin UI must call `/api/health` on the HTTP port, not the WebSocket port
+- top-level `llm`, `asr`, `tts`, and `device` are backward-compatible
+- `details` is additive and may be consumed when present
+- `/api/health` should be treated as the source of truth for backend runtime status
+- local checks performed by a UI host may differ from runtime health if services such as TTS are deployed differently
+
+Portability notes:
+
+- service names, script paths, and deployment layout may vary by host
+- examples should use placeholders such as `<SERVER_HOST>`, `<HTTP_PORT>`, and `<WS_PORT>`
+
 ## Operator View
 
 For a fresh deployment, the important mental model is:

@@ -323,6 +323,13 @@ Runtime behavior notes:
 - `device.last_seen` and `device.connection_duration` remain `null` unless those values are already easily available from runtime state.
 - TTS diagnostics report the final probe result only. The implementation may try `/health` first and then fall back to the base URL, but the response reports only the final attempted endpoint.
 - Any HTTP status below `500` is currently mapped to top-level `ok`, so some ASR or TTS providers may return `404` or `405` in `details.*.http_status` while still reporting `status: ok`.
+- UI-side local checks may differ from runtime health checks when services such as TTS are deployed differently; treat `/api/health` as the source of truth for backend runtime status.
+
+Integration endpoint summary:
+
+- health endpoint: `http://<SERVER_HOST>:<HTTP_PORT>/api/health`
+- OTA endpoint: `http://<SERVER_HOST>:<HTTP_PORT>/xiaozhi/ota/`
+- device WebSocket endpoint: `ws://<SERVER_HOST>:<WS_PORT>/xiaozhi/v1/`
 
 ---
 ## Feature List ✨
