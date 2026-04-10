@@ -10,8 +10,8 @@ services:
     environment:
       - TZ=${TZ:-UTC}
     ports:
-      - "8000:8000"
-      - "8003:8003"
+      - "${WS_PORT:-8000}:8000"
+      - "${HTTP_PORT:-8003}:8003"
     volumes:
       - ./server/main/xiaozhi-server:/opt/xiaozhi-esp32-server
       - ./data:/opt/xiaozhi-esp32-server/data

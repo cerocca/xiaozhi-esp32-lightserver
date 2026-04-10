@@ -209,6 +209,9 @@ Notes:
 - You may use any OpenAI-compatible provider instead of the example above.
 - Keep the logical module entries such as `OpenaiASR`, `AliLLM`, and `OpenAITTS`.
 - Keep the active profile names aligned with `runtime.*_profile`.
+- For the OpenAI TTS example above, `voice` is the config knob for speaker selection.
+- Example OpenAI voice: `voice: alloy`
+- If your live runtime uses a different TTS profile such as `PiperOpenAITTS`, edit that profile's own `voice` field instead.
 
 ### 5.5 Common Config Mistakes
 
