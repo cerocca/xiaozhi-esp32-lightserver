@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.1.5
+
+Server deployment and packaging refinement release.
+
+### Added
+- `.env.example` for first-boot configuration
+- custom local Docker image build via root `Dockerfile`
+- `docker-compose.dev.yml` to preserve bind-mounted development workflow
+
+### Changed
+- default `docker-compose.yml` now builds a local custom image from this repository
+- runtime no longer depends on a host-mounted `server/main/xiaozhi-server` source tree
+- first-boot setup flow is clearer and more deployment-oriented
+- documentation now distinguishes example TTS config from the live runtime TTS profile
+
+### Notes
+- mutable runtime data remains host-mounted through `./data`
+- the SenseVoice model remains an external mounted asset
+- the active live TTS runtime path is profile-based and may differ from example OpenAI TTS snippets in docs
+
+
 ## v0.1.0
 
 Initial stable deployment baseline for this repository.
