@@ -1,56 +1,58 @@
 # Xiaozhi ESP32 Lightserver
 
-Deployment-focused server repository for an ESP32 + LLM stack derived from the `xinnan-tech/xiaozhi-esp32-server` codebase.
+Deployment-focused server repository for an ESP32 device (xiaozhi based) + LLM stack, derived from the upstream project:
 
-This repository adapts the upstream server structure for a lighter, Docker-first deployment setup and documents the server as the backend runtime source of truth.
+https://github.com/xinnan-tech/xiaozhi-esp32-server
+
+This repository adapts the upstream server structure for a lighter, Docker-first deployment setup and treats the server as the backend runtime source of truth.
+
+Companion Admin UI (health, logs, device status):
+https://github.com/cerocca/xiaozhi-admin-ui
+
+---
+
+## What this repo is
+
+This is a deployment-oriented backend for ESP32 voice devices.
+
+- Docker-first setup
+- Minimal configuration surface
+- Runtime-driven (via /api/health)
+- Designed for stability, not experimentation
+
+This is not a generic LLM server.
+It is the runtime backend for ESP32-based voice devices.
 
 ---
 
 ## Quick Start
 
-```bash
-git clone <REPO_URL> <PROJECT_DIR>
-cd <PROJECT_DIR>
+git clone https://github.com/cerocca/xiaozhi-esp32-lightserver.git
+cd xiaozhi-esp32-lightserver
+
 cp .env.example .env
 cp data/.config.example.yaml data/.config.yaml
-# edit .env and data/.config.yaml
+
+# edit .env
+# edit data/.config.yaml
+
 docker compose up -d
-```
 
-Use Docker Compose as the default first-boot path.
-The default Compose flow builds a local custom image from this repository, so the container no longer needs the host `./server/main/xiaozhi-server` tree mounted at runtime.
-
-`.env` is the Docker-facing entry point for published ports and timezone.
-`data/.config.yaml` remains the server override file for public URLs and provider settings.
-`SERVER_HOST` from `.env` is not injected into `data/.config.yaml` yet, so copy the same value into the URLs there.
-
-Runtime mounts that remain external:
-
-- `./data` for mutable config and OTA/runtime artifacts
-- `./models/SenseVoiceSmall/model.pt` for the ASR model asset
-
-If you want the old bind-mounted source-tree workflow for local development, run:
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
-```
+For full setup details, see SETUP.md
 
 ---
 
-## First Boot Config
+## First Boot (minimal config)
 
-Edit only the small set of values below for a normal first install.
+.env
 
-```bash
-# .env
 SERVER_HOST=192.168.1.50
 WS_PORT=8000
 HTTP_PORT=8003
 TZ=Europe/Rome
-```
 
-```yaml
-# data/.config.yaml
+data/.config.yaml
+
 server:
   websocket: ws://192.168.1.50:8000/xiaozhi/v1/
   vision_explain: http://192.168.1.50:8003/mcp/vision/explain
@@ -67,71 +69,68 @@ TTS:
   openai_tts:
     api_key: sk-...
     voice: alloy
-```
-
-`SERVER_HOST` from `.env` is not copied into these URLs automatically yet.
-If you change `WS_PORT` or `HTTP_PORT` in `.env`, update these URLs to match.
-Keep the default ports unless you intentionally need different published host ports.
-
-For the OpenAI TTS example shown here, `voice` is configurable in `data/.config.yaml`.
-Example OpenAI voice: `voice: alloy`
-If your live runtime uses a different TTS profile such as `PiperOpenAITTS`, edit that profile's own `voice` field instead.
 
 ---
 
-## Quick Verification
+## Runtime Architecture
 
-These examples assume the default published ports on the same machine.
+Top-level status (/api/health):
+- llm
+- asr
+- tts
+- device
 
-```bash
+Details:
+- provider-level diagnostics
+- endpoint checks
+- HTTP status mapping
+
+Principles:
+- top-level = source of truth
+- details = context only
+- device=disconnected is neutral
+
+---
+
+## TTS Configuration
+
+Example (OpenAI):
+
+TTS:
+  openai_tts:
+    voice: alloy
+
+Live example (Piper):
+
+TTS:
+  PiperOpenAITTS:
+    voice: riccardo
+
+Always edit the active profile.
+
+---
+
+## Docker Setup
+
+docker compose build
+docker compose up -d
+
+---
+
+## Verification
+
 curl http://127.0.0.1:8000/
-# expected: Server is running
-
 curl http://127.0.0.1:8003/api/health
-# expected: JSON response
-```
-
-Optional:
-
-```bash
-curl -s http://127.0.0.1:8003/api/health | jq
-```
-
-If `"device": "disconnected"` appears in the health response, that is normal when no ESP32 device is currently connected.
 
 ---
 
-## Ports
+## Project Structure
 
-- `8000` = WebSocket server for ESP32 devices
-- `8003` = HTTP server for `/api/health`, OTA, and other HTTP endpoints
-
-Important:
-
-- `GET /api/health` belongs on port `8003`
-- plain HTTP requests to port `8000` return `Server is running`
-- if you call `/api/health` on port `8000`, you will not get JSON; this is expected
-
----
-
-## Runtime Health
-
-Use `http://<SERVER_HOST>:<HTTP_PORT>/api/health` as the backend runtime source of truth.
-
-The top-level `llm`, `asr`, `tts`, and `device` fields are backward-compatible. The `details` object is additive and may be consumed when present.
-
----
-
-## Documentation
-
-- [SETUP.md](SETUP.md) - full Docker-first deployment, configuration, verification, and troubleshooting guide
-- [ARCHITECTURE.md](ARCHITECTURE.md) - architecture, ports, health semantics, and integration surface
-- [server/docs/Deployment.md](server/docs/Deployment.md) - short server deployment note and stable integration endpoints
-
----
-
-## Scope
-
-- server-side documentation only
-- Docker-first deployment
-- native Python startup is an advanced/dev path, not the main onboarding path
+data/
+models/
+server/main/xiaozhi-server
+Dockerfile
+docker-compose.yml
+docker-compose.dev.yml
+README.md
+SETUP.md
