@@ -1,6 +1,7 @@
 # Server Deployment Guide
 
 Docker Compose is the recommended first-boot path for a fresh Linux server.
+The default Compose path builds a local custom image from the checked-out repository so the running container does not depend on a host-mounted `server/main/xiaozhi-server` source tree.
 
 This guide is written for a careful operator who wants the highest chance of a clean first install without reading source code.
 
@@ -110,6 +111,8 @@ Use these files:
 - `data/.config.yaml` = real deployment config
 - `data/.config.example.yaml` = versioned example
 - `server/main/xiaozhi-server/config.yaml` = shipped defaults, normally not edited for deployment
+- `Dockerfile` = image packaging layer that copies the current server tree into the container
+- `docker-compose.dev.yml` = optional local-development override that restores the source bind mount
 
 Do not put deployment secrets into version-controlled files.
 
@@ -232,6 +235,14 @@ Optional:
 
 - set `TZ` in the shell before startup if you want container logs in your local timezone
 - if unset, the root Compose file defaults to `UTC`
+- the first run may spend extra time building `xiaozhi-esp32-lightserver:local`
+
+For local development only, if you intentionally want the container to run against the live host source tree again:
+
+```bash
+cd <PROJECT_DIR>
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+```
 
 Check status:
 

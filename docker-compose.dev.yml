@@ -1,0 +1,4 @@
+services:
+  xiaozhi-esp32-server:
+    volumes:
+      - ./server/main/xiaozhi-server:/opt/xiaozhi-esp32-server

@@ -1,0 +1,13 @@
+.git
+.gitignore
+.env
+.env.*
+data/
+models/
+tmp/
+**/__pycache__/
+**/*.pyc
+**/.DS_Store
+**/._*
+server/main/xiaozhi-server/tmp/
+server/main/xiaozhi-server/.claude/

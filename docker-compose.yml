@@ -2,7 +2,11 @@
 
 services:
   xiaozhi-esp32-server:
-    image: ghcr.nju.edu.cn/xinnan-tech/xiaozhi-esp32-server:server_latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      pull: true
+    image: xiaozhi-esp32-lightserver:local
     container_name: xiaozhi-esp32-server
     restart: always
     security_opt:
@@ -13,7 +17,6 @@ services:
       - "${WS_PORT:-8000}:8000"
       - "${HTTP_PORT:-8003}:8003"
     volumes:
-      - ./server/main/xiaozhi-server:/opt/xiaozhi-esp32-server
       - ./data:/opt/xiaozhi-esp32-server/data
       - ./models/SenseVoiceSmall/model.pt:/opt/xiaozhi-esp32-server/models/SenseVoiceSmall/model.pt
     extra_hosts:

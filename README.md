@@ -18,10 +18,22 @@ docker compose up -d
 ```
 
 Use Docker Compose as the default first-boot path.
+The default Compose flow builds a local custom image from this repository, so the container no longer needs the host `./server/main/xiaozhi-server` tree mounted at runtime.
 
 `.env` is the Docker-facing entry point for published ports and timezone.
 `data/.config.yaml` remains the server override file for public URLs and provider settings.
 `SERVER_HOST` from `.env` is not injected into `data/.config.yaml` yet, so copy the same value into the URLs there.
+
+Runtime mounts that remain external:
+
+- `./data` for mutable config and OTA/runtime artifacts
+- `./models/SenseVoiceSmall/model.pt` for the ASR model asset
+
+If you want the old bind-mounted source-tree workflow for local development, run:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+```
 
 ---
 
