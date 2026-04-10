@@ -1,52 +1,33 @@
-# TODO - Xiaozhi ESP32 Server
+# TODO - Xiaozhi ESP32 Lightserver
 
-## High Priority
+## Next Step
 
-- [ ] Keep the server documentation aligned with the real runtime state
+- [ ] UI_HEALTH: conservative Admin UI health UX pass
+
+## Near-Term Backlog
+
+- [ ] Keep the boundary between runtime server and admin tooling clear
+- [ ] Evaluate whether the Admin UI should remain standalone or move into the server repo
+- [ ] Decide monorepo direction after / together with `v0.2.0`
 - [ ] Refine runtime config handling for providers and model profiles
 - [ ] Understand and fix the timezone / offset issue
-- [ ] Fix display rendering differences (round vs square)
 
-## Important Improvements
+## Known Issues / Runtime Oddities
 
+- [ ] Device volume is not always consistent with perceived loudness
+- [ ] Possible aggressive reconnect behavior
+- [ ] MCP / voiceprint warnings need review and cleanup
+- [ ] Verify restart / invalid-config edge cases
 - [ ] Make logging easier to read
 - [ ] Improve Groq error handling (rate limit / fallback)
-- [ ] Evaluate cleaner endpoints or hooks for device state
-- [ ] Reduce MCP and voiceprint warning/config noise in logs
 
-## Admin Tooling Integration
-
-- [x] Separate Admin UI project exists (`xiaozhi-admin-ui`)
-- [ ] Keep the boundary between runtime server and admin tooling clear
-- [ ] Evaluate small non-invasive hooks that improve observability and management
-
-## Project Evolution
+## Later
 
 - [ ] Local LLM support (Ollama)
 - [ ] Conversation memory
 - [ ] Improved wake word handling
 - [ ] More robust multi-device support
-
-## Future Ideas
-
 - [ ] ESP32 display UI
 - [ ] Home Assistant integration
 - [ ] Custom voice personality
 - [ ] Native Anthropic support in the Xiaozhi backend, only if the OpenAI compatibility layer proves limiting
-
-## Bugs / Observed Oddities
-
-- [ ] Device volume is not always consistent with perceived loudness
-- [ ] Possible aggressive reconnect behavior
-- [ ] MCP / voiceprint warnings need review and cleanup
-- [ ] Verify restart/config-invalid edge cases
-
-## Done
-
-- [x] Server running
-- [x] OTA working
-- [x] WebSocket working
-- [x] Groq ASR working
-- [x] Groq LLM working
-- [x] Local Piper TTS integrated
-- [x] End-to-end voice pipeline working
