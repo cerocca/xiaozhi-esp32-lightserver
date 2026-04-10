@@ -211,14 +211,6 @@ Expected result:
 
 ---
 
-## Next Steps
-
-- UI Health improvements (Admin UI)  
-- monorepo evaluation  
-- runtime observability improvements  
-
----
-
 ## Credits
 
 Based on:  
