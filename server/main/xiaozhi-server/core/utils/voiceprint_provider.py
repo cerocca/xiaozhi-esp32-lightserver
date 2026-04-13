@@ -28,7 +28,7 @@ class VoiceprintProvider:
         self.speaker_ids = []
         
         if not self.original_url:
-            logger.bind(tag=TAG).warning("声纹识别URL未配置，声纹识别将被禁用")
+            logger.bind(tag=TAG).info("声纹识别URL未配置，声纹识别保持禁用")
             self.enabled = False
         else:
             # 解析URL和key
@@ -195,4 +195,3 @@ class VoiceprintProvider:
             elapsed = time.monotonic() - api_start_time
             logger.bind(tag=TAG).error(f"声纹识别失败: {e}")
             return None
-

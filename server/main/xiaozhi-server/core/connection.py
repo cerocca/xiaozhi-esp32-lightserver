@@ -590,6 +590,8 @@ class ConnectionHandler:
                 if voiceprint_provider is not None and voiceprint_provider.enabled:
                     self.voiceprint_provider = voiceprint_provider
                     self.logger.bind(tag=TAG).info("声纹识别功能已在连接时动态启用")
+                elif not voiceprint_config.get("url") or not voiceprint_config.get("speakers"):
+                    self.logger.bind(tag=TAG).info("声纹识别未配置完整，保持禁用")
                 else:
                     self.logger.bind(tag=TAG).warning("声纹识别功能启用但配置不完整")
             else:
