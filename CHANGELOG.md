@@ -1,5 +1,12 @@
 # Changelog
 
+
+## [Unreleased]
+
+### Fixed
+- fix device speaking Chinese on standby due to inherited `end_prompt` in default server config
+- workaround: override `end_prompt.enable=false` in runtime config
+
 ## v0.1.5
 
 Server deployment and packaging refinement release.

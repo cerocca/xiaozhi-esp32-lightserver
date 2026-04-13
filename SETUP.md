@@ -551,6 +551,15 @@ Check:
 - provider model names are valid
 - `runtime.llm_profile`, `runtime.asr_profile`, and `runtime.tts_profile` reference existing profile names
 
+### 9.9 Chinese speech on standby
+
+If the device speaks Chinese when idle, ensure:
+
+```yaml
+end_prompt:
+  enable: false
+
+
 ## 10. Advanced / Dev Appendix
 
 Native Python startup exists in the upstream project, but it is not the recommended first deployment path for a new Linux server.
