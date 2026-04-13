@@ -3,7 +3,8 @@
 For a fresh Linux server deployment of the server runtime, use the repository root guide:
 
 - `SETUP.md` for the Docker Compose installation flow
-- `ARCHITECTURE.md` for the port and endpoint map
+- `README.md` for the high-level packaging and deployment summary
+- `SETUP.md` for the port and endpoint verification steps
 - `data/.config.example.yaml` as the minimal starting config
 
 The recommended operator path is:
@@ -38,6 +39,7 @@ Portability note:
 - service names, script paths, and deployment layout may vary by host
 - use placeholders such as `<SERVER_HOST>`, `<HTTP_PORT>`, and `<WS_PORT>` in deployment examples
 - the repository root `docker compose up -d` flow now builds a local custom image from this repo and keeps only runtime data/model mounts external
+- local model assets and similar host-provided components are still external when your selected runtime path depends on them
 - `docker-compose.dev.yml` is optional and only for bind-mounted local development
 
 Native Python startup and more specialized deployment variants should be treated as advanced scenarios, not as the default first-install path.

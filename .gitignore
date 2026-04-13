@@ -2,6 +2,7 @@
 data/.config.yaml
 .env
 *.env
+docs_local/
 
 # Runtime / temp
 tmp/

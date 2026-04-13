@@ -7,6 +7,17 @@ This guide is written for a careful operator who wants the highest chance of a c
 
 ## 1. What You Are Deploying
 
+The default repository-root Compose flow builds a custom Docker image from this checked-out repository.
+
+Keep this packaging model in mind:
+
+- the image contains the server code from this repo
+- live runtime config remains external in `data/.config.yaml`
+- runtime data/state remains external under `./data`
+- local model assets remain external unless you provide them on the host
+- some deployments use remote/API-based providers and therefore still require outbound access and valid credentials
+- some local components, including Piper or local speech/model paths, still require host-side provisioning depending on the runtime profile you enable
+
 The server runtime exposes two separate ports:
 
 - `8000` = WebSocket server for ESP32 devices
@@ -77,6 +88,7 @@ Use these endpoints as the stable SERVER <-> ADMIN UI integration surface:
 Important:
 
 - Admin UI must use the HTTP port for `/api/health`
+- the companion Admin UI exposes health/status support through this `/api/health` contract
 - top-level `llm`, `asr`, `tts`, and `device` are backward-compatible
 - `details` is additive, and UI consumers may read `details.*` when present
 - HTTP status mapping rules are defined in the health endpoint section below
@@ -115,6 +127,13 @@ Use these files:
 - `docker-compose.dev.yml` = optional local-development override that restores the source bind mount
 
 Do not put deployment secrets into version-controlled files.
+
+Important packaging note:
+
+- building the image does not remove the need for host-side runtime inputs
+- `data/.config.yaml` still supplies the real provider settings and endpoints
+- local ASR/TTS/model assets are still external when your selected profiles depend on them
+- remote/API-based profiles still need correct URLs, keys, and model names
 
 ### 5.2 Mandatory Values
 

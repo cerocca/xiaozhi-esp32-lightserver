@@ -1,13 +1,20 @@
 # Xiaozhi ESP32 Lightserver
 
+[![status](https://img.shields.io/badge/status-stable-2ea44f)](https://github.com/cerocca/xiaozhi-esp32-lightserver)
+[![backend](https://img.shields.io/badge/backend-xiaozhi%20lightserver-0a7ea4)](https://github.com/cerocca/xiaozhi-esp32-lightserver)
+[![runtime](https://img.shields.io/badge/runtime-health%20API-4c9f38)](https://github.com/cerocca/xiaozhi-esp32-lightserver/blob/main/SETUP.md)
+[![device](https://img.shields.io/badge/device-ESP32--S3%20%2F%20xiaozhi-555555)](https://github.com/xinnan-tech/xiaozhi-esp32-server)
+[![deploy](https://img.shields.io/badge/deploy-Docker%20image-2496ED?logo=docker&logoColor=white)](https://github.com/cerocca/xiaozhi-esp32-lightserver/blob/main/SETUP.md)
+[![scope](https://img.shields.io/badge/scope-self--hosted%20%2F%20LAN--first-6f42c1)](https://github.com/cerocca/xiaozhi-esp32-lightserver)
+
 Deployment-focused server repository for an ESP32 device (xiaozhi based) + LLM stack, derived from the upstream project:
 
 👉 https://github.com/xinnan-tech/xiaozhi-esp32-server
 
 This repository adapts the upstream server structure for a lighter, Docker-first deployment setup and treats the server as the backend runtime source of truth.
 
-👉 Companion Admin UI (health, logs, device status) available at  
-https://github.com/cerocca/xiaozhi-admin-ui
+👉 Companion Admin UI (health, logs, device status, and runtime status views powered by `/api/health`) available at  
+[https://github.com/cerocca/xiaozhi-admin-ui](https://github.com/cerocca/xiaozhi-admin-ui)
 
 ---
 
@@ -41,6 +48,19 @@ docker compose up -d
 ```
 
 👉 See **[SETUP.md](SETUP.md)** for full configuration and troubleshooting.
+
+---
+
+## What The Docker Image Contains
+
+The default `docker compose` flow builds a custom image from this repository.
+
+- The image contains the server code and its packaged runtime environment.
+- Your runtime data stays external in `./data`.
+- Model assets stay external unless you provide them separately on the host.
+- Remote/API-based providers still require valid URLs, credentials, and models in `data/.config.yaml`.
+
+This means the image is not a full self-contained AI stack by itself. If you choose local components such as host-provided ASR models or Piper voices, those assets still need to exist outside the image and be mounted or otherwise made available at runtime.
 
 ---
 
@@ -151,7 +171,15 @@ docker compose up -d
 ### Runtime mounts
 
 - `./data` → config + runtime state  
-- `./models/...` → ASR model  
+- `./models/...` → host-provided local model assets, when used  
+
+### Read this before first boot
+
+- The built image already includes the server code from this repository.
+- `data/.config.yaml` is still external and controls the live runtime behavior.
+- Local model files and similar assets are not automatically bundled into the image.
+- Some deployments use remote providers for LLM, ASR, or TTS, so those API endpoints and credentials must still be configured correctly.
+- Some local components, including Piper or local speech/model paths, may still require host-side provisioning depending on the profile you activate.
 
 ### Dev mode (optional)
 
@@ -191,11 +219,11 @@ Expected result:
 ```
 .
 ├── data/                      # runtime config (mounted)
-├── models/                    # ASR models (mounted)
+├── models/                    # optional host-provided local models
 ├── server/main/xiaozhi-server # upstream server code
-├── Dockerfile                # image packaging
-├── docker-compose.yml        # runtime
-├── docker-compose.dev.yml    # dev override
+├── Dockerfile                 # image packaging
+├── docker-compose.yml         # runtime
+├── docker-compose.dev.yml     # dev override
 ├── README.md
 ├── SETUP.md
 ```
@@ -206,6 +234,7 @@ Expected result:
 
 - `.env` = Docker/runtime exposure  
 - `data/.config.yaml` = actual server behavior  
+- local model assets remain external when your chosen runtime needs them
 - keep them aligned manually  
 - rebuild required after server code changes  
 
