@@ -13,6 +13,8 @@
 ### Fixed
 - fix device speaking Chinese on standby due to inherited `end_prompt` in default server config
 - workaround: override `end_prompt.enable=false` in runtime config
+- restore working device volume control via MCP tool calling
+- add direct server-side bypass for clear volume commands to reduce latency
 
 ## v0.1.5
 

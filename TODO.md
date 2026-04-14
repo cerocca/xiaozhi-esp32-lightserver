@@ -1,8 +1,5 @@
 # TODO - Xiaozhi ESP32 Lightserver
 
-## Next Step
-- [ ] Clarify device volume control capability exposure (MCP / IoT descriptors)
-
 ## Architecture / Repo Direction
 - [ ] Keep the boundary between runtime server and admin tooling clear
 - [ ] Evaluate whether the Admin UI should remain standalone or move into the server repo
