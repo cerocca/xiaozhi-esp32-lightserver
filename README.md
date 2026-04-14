@@ -6,6 +6,7 @@
 [![device](https://img.shields.io/badge/device-ESP32--S3%20%2F%20xiaozhi-555555)](https://github.com/xinnan-tech/xiaozhi-esp32-server)
 [![deploy](https://img.shields.io/badge/deploy-Docker%20image-2496ED?logo=docker&logoColor=white)](https://github.com/cerocca/xiaozhi-esp32-lightserver/blob/main/SETUP.md)
 [![scope](https://img.shields.io/badge/scope-self--hosted%20%2F%20LAN--first-6f42c1)](https://github.com/cerocca/xiaozhi-esp32-lightserver)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Deployment-focused server repository for an ESP32 device (xiaozhi based) + LLM stack, derived from the upstream project:
 
@@ -15,6 +16,8 @@ This repository adapts the upstream server structure for a lighter, Docker-first
 
 👉 Companion Admin UI (health, logs, device status, and runtime status views powered by `/api/health`) available at  
 [https://github.com/cerocca/xiaozhi-admin-ui](https://github.com/cerocca/xiaozhi-admin-ui)
+
+Licensed under the MIT License.
 
 ---
 
