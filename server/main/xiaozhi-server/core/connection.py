@@ -2,6 +2,7 @@ import os
 import sys
 import copy
 import json
+import re
 import uuid
 import time
 import queue
@@ -839,6 +840,87 @@ class ConnectionHandler:
         # 更新系统prompt至上下文
         self.dialogue.update_system_message(self.prompt)
 
+    @staticmethod
+    def _stringify_tool_descriptor(tool_desc):
+        try:
+            return json.dumps(tool_desc, ensure_ascii=False).lower()
+        except Exception:
+            return str(tool_desc).lower()
+
+    def _get_volume_compatible_tools(self, functions):
+        if not functions:
+            return []
+
+        compatible_tools = []
+        keywords = ["volume", "audio_speaker", "speaker", "音量", "扬声器", "喇叭"]
+
+        for tool in functions:
+            function_info = tool.get("function", {})
+            tool_name = function_info.get("name", "")
+            tool_text = f"{tool_name} {self._stringify_tool_descriptor(tool)}"
+            if any(keyword in tool_text for keyword in keywords):
+                compatible_tools.append(tool_name)
+
+        return compatible_tools
+
+    @staticmethod
+    def _is_volume_request(query):
+        if not query:
+            return False
+
+        text = query.lower()
+        patterns = [
+            r"alza(?:re)?\s+(?:il\s+)?volume",
+            r"abbassa(?:re)?\s+(?:il\s+)?volume",
+            r"(?:imposta|regola|metti)\s+(?:il\s+)?volume",
+            r"(?:increase|decrease|turn up|turn down|set|adjust)\s+(?:the\s+)?volume",
+            r"(?:调大|调小|增大|降低|设置|調大|調小|設置).{0,4}音量",
+        ]
+        return any(re.search(pattern, text) for pattern in patterns)
+
+    @staticmethod
+    def _looks_like_operational_request(query):
+        if not query:
+            return False
+
+        text = query.lower()
+        patterns = [
+            r"\b(?:set|adjust|change|control|turn on|turn off|open|close|play|pause|stop)\b",
+            r"\b(?:imposta|regola|cambia|controlla|apri|chiudi|accendi|spegni|alza|abbassa|riproduci|pausa|ferma)\b",
+            r"(?:设置|調整|调整|控制|打开|关闭|播放|暂停|停止|调大|调小|增大|降低)",
+        ]
+        return any(re.search(pattern, text) for pattern in patterns)
+
+    def _log_tool_exposure_diagnostics(self, query, functions, depth):
+        if depth != 0:
+            return
+
+        tool_names = []
+        if functions:
+            tool_names = [
+                tool.get("function", {}).get("name", "")
+                for tool in functions
+                if tool.get("function", {}).get("name", "")
+            ]
+
+        volume_tools = self._get_volume_compatible_tools(functions)
+        self.logger.bind(tag=TAG).info(
+            f"[tool_diag] session={self.session_id} tool_count={len(tool_names)} "
+            f"volume_tool_count={len(volume_tools)}"
+        )
+        self.logger.bind(tag=TAG).debug(
+            f"[tool_diag] exposed_tools={tool_names}"
+        )
+        if volume_tools:
+            self.logger.bind(tag=TAG).info(
+                f"[tool_diag] volume_compatible_tools={volume_tools}"
+            )
+
+        if self._is_volume_request(query) and not volume_tools:
+            self.logger.bind(tag=TAG).warning(
+                "[tool_diag] volume_intent_detected_but_no_volume_tool_exposed"
+            )
+
     def chat(self, query, depth=0):
         if query is not None:
             self.logger.bind(tag=TAG).info(f"大模型收到用户消息: {query}")
@@ -907,6 +989,7 @@ class ConnectionHandler:
                 and not force_final_answer
         ):
             functions = self.func_handler.get_functions()
+            self._log_tool_exposure_diagnostics(query, functions, depth)
 
         # 长对话工具调用规则强化：动态生成基于当前可用工具的提醒
         tool_call_reminder = None
@@ -1071,8 +1154,9 @@ class ConnectionHandler:
                     )
 
             if not bHasError and len(tool_calls_list) > 0:
-                self.logger.bind(tag=TAG).debug(
-                    f"检测到 {len(tool_calls_list)} 个工具调用"
+                tool_names = [tool_call_data["name"] for tool_call_data in tool_calls_list]
+                self.logger.bind(tag=TAG).info(
+                    f"[tool_diag] model_emitted_tool_calls count={len(tool_calls_list)} names={tool_names}"
                 )
 
                 # 更新工具调用统计
@@ -1119,6 +1203,10 @@ class ConnectionHandler:
                     try:
                         result = future.result(timeout=tool_call_timeout)
                         tool_results.append((result, tool_call_data))
+                        self.logger.bind(tag=TAG).info(
+                            f"[tool_diag] tool_completed name={tool_call_data['name']} "
+                            f"action={result.action.name} result={result.result} response={result.response}"
+                        )
                         # 使用公共方法上报工具调用结果
                         enqueue_tool_report(self, tool_call_data['name'], tool_input, str(result.result) if result.result else None, report_tool_call=False)
 
@@ -1147,6 +1235,12 @@ class ConnectionHandler:
             # 更新工具调用统计：如果没有调用工具，增加计数
             if depth == 0 and not tool_call_flag:
                 self.tool_call_stats['consecutive_no_call'] += 1
+                if self._looks_like_operational_request(query):
+                    volume_tools = self._get_volume_compatible_tools(functions)
+                    self.logger.bind(tag=TAG).warning(
+                        f"[tool_diag] operational_request_without_tool_call "
+                        f"query={query} volume_tools={volume_tools}"
+                    )
 
         if depth == 0:
             self.tts.tts_text_queue.put(
