@@ -46,6 +46,8 @@ from core.utils import textUtils
 
 
 TAG = __name__
+VOLUME_TOOL_NAME = "self.audio_speaker.set_volume"
+DEVICE_STATUS_TOOL_NAME = "self.get_device_status"
 
 # 工具调用规则 - 用于动态注入提醒
 TOOL_CALLING_RULES = """
@@ -891,6 +893,190 @@ class ConnectionHandler:
         ]
         return any(re.search(pattern, text) for pattern in patterns)
 
+    @staticmethod
+    def _clamp_volume(volume):
+        return max(0, min(100, int(volume)))
+
+    def _parse_direct_volume_command(self, query):
+        if not query:
+            return None
+
+        text = query.lower().strip()
+
+        explicit_patterns = [
+            r"(?:imposta|regola|metti)\s+(?:il\s+)?volume\s+(?:(?:a|al)\s*)?(\d{1,3})",
+            r"(?:set|adjust)\s+(?:the\s+)?volume\s+(?:to)\s*(\d{1,3})",
+            r"(?:设置|設置).{0,4}音量.{0,2}(\d{1,3})",
+        ]
+        for pattern in explicit_patterns:
+            match = re.search(pattern, text)
+            if match:
+                return {
+                    "target_volume": self._clamp_volume(match.group(1)),
+                    "response_text": f"Volume impostato a {self._clamp_volume(match.group(1))}.",
+                }
+
+        min_max_patterns = [
+            (r"(?:imposta|regola|metti)\s+(?:il\s+)?volume\s+al\s+minimo", 0),
+            (r"(?:imposta|regola|metti)\s+(?:il\s+)?volume\s+al\s+massimo", 100),
+            (r"(?:set|adjust)\s+(?:the\s+)?volume\s+to\s+(?:minimum|min)", 0),
+            (r"(?:set|adjust)\s+(?:the\s+)?volume\s+to\s+(?:maximum|max)", 100),
+        ]
+        for pattern, target_volume in min_max_patterns:
+            if re.search(pattern, text):
+                return {
+                    "target_volume": target_volume,
+                    "response_text": f"Volume impostato a {target_volume}.",
+                }
+
+        up_patterns = [
+            r"(?:alza|alta|aumenta)\s+(?:il\s+)?volume(?:\s+(?:di)\s*(\d{1,3}))?",
+            r"(?:turn up|increase)\s+(?:the\s+)?volume(?:\s+(?:by)\s*(\d{1,3}))?",
+            r"(?:调大|增大|調大).{0,4}音量(?:.{0,2}(\d{1,3}))?",
+        ]
+        for pattern in up_patterns:
+            match = re.search(pattern, text)
+            if match:
+                step = int(match.group(1)) if match.group(1) else 10
+                return {"volume_delta": step}
+
+        down_patterns = [
+            r"(?:abbassa|diminuisci)\s+(?:il\s+)?volume(?:\s+(?:di)\s*(\d{1,3}))?",
+            r"(?:turn down|decrease)\s+(?:the\s+)?volume(?:\s+(?:by)\s*(\d{1,3}))?",
+            r"(?:调小|降低|調小).{0,4}音量(?:.{0,2}(\d{1,3}))?",
+        ]
+        for pattern in down_patterns:
+            match = re.search(pattern, text)
+            if match:
+                step = int(match.group(1)) if match.group(1) else 10
+                return {"volume_delta": -step}
+
+        return None
+
+    @staticmethod
+    def _extract_volume_from_status_result(raw_result):
+        payload = raw_result
+        if isinstance(raw_result, str):
+            try:
+                payload = json.loads(raw_result)
+            except Exception:
+                json_str = extract_json_from_string(raw_result)
+                if json_str is None:
+                    return None
+                try:
+                    payload = json.loads(json_str)
+                except Exception:
+                    return None
+
+        if not isinstance(payload, dict):
+            return None
+
+        audio_speaker = payload.get("audio_speaker", {})
+        if isinstance(audio_speaker, dict) and "volume" in audio_speaker:
+            try:
+                return ConnectionHandler._clamp_volume(audio_speaker["volume"])
+            except Exception:
+                return None
+
+        if "volume" in payload:
+            try:
+                return ConnectionHandler._clamp_volume(payload["volume"])
+            except Exception:
+                return None
+
+        return None
+
+    def _speak_direct_text(self, text):
+        self.tts_MessageText = text
+        self.tts.tts_text_queue.put(
+            TTSMessageDTO(
+                sentence_id=self.sentence_id,
+                sentence_type=SentenceType.FIRST,
+                content_type=ContentType.ACTION,
+            )
+        )
+        self.tts.tts_one_sentence(self, ContentType.TEXT, content_detail=text)
+        self.tts.tts_text_queue.put(
+            TTSMessageDTO(
+                sentence_id=self.sentence_id,
+                sentence_type=SentenceType.LAST,
+                content_type=ContentType.ACTION,
+            )
+        )
+        self.dialogue.put(Message(role="assistant", content=text))
+
+    def _call_tool_direct(self, tool_name, arguments):
+        tool_call_data = {
+            "id": str(uuid.uuid4().hex),
+            "name": tool_name,
+            "arguments": json.dumps(arguments, ensure_ascii=False),
+        }
+        future = asyncio.run_coroutine_threadsafe(
+            self.func_handler.handle_llm_function_call(self, tool_call_data),
+            self.loop,
+        )
+        tool_call_timeout = int(self.config.get("tool_call_timeout", 30))
+        return future.result(timeout=tool_call_timeout)
+
+    def _try_handle_direct_volume_command(self, query, depth):
+        if depth != 0 or not query or not hasattr(self, "func_handler"):
+            return False
+
+        volume_command = self._parse_direct_volume_command(query)
+        if volume_command is None:
+            return False
+
+        functions = self._get_functions_for_llm()
+        function_names = set(self._extract_function_names(functions))
+        if VOLUME_TOOL_NAME not in function_names:
+            return False
+
+        target_volume = volume_command.get("target_volume")
+        if target_volume is None:
+            if DEVICE_STATUS_TOOL_NAME not in function_names:
+                return False
+            try:
+                status_result = self._call_tool_direct(DEVICE_STATUS_TOOL_NAME, {})
+            except Exception as e:
+                self.logger.bind(tag=TAG).warning(
+                    f"[tool_diag] direct_volume_status_failed error={e}"
+                )
+                return False
+
+            current_volume = self._extract_volume_from_status_result(status_result.result)
+            if current_volume is None:
+                self.logger.bind(tag=TAG).warning(
+                    "[tool_diag] direct_volume_status_missing_current_volume"
+                )
+                return False
+
+            target_volume = self._clamp_volume(
+                current_volume + volume_command["volume_delta"]
+            )
+            volume_command["response_text"] = f"Volume impostato a {target_volume}."
+
+        try:
+            result = self._call_tool_direct(
+                VOLUME_TOOL_NAME, {"volume": target_volume}
+            )
+        except Exception as e:
+            self.logger.bind(tag=TAG).warning(
+                f"[tool_diag] direct_volume_tool_failed error={e}"
+            )
+            return False
+
+        if result.action not in [Action.REQLLM, Action.RESPONSE, Action.NONE]:
+            return False
+
+        response_text = volume_command.get(
+            "response_text", f"Volume impostato a {target_volume}."
+        )
+        self.logger.bind(tag=TAG).info(
+            f"[tool_diag] direct_volume_bypass_success target_volume={target_volume}"
+        )
+        self._speak_direct_text(response_text)
+        return True
+
     def _log_tool_exposure_diagnostics(self, query, functions, depth):
         if depth != 0:
             return
@@ -904,9 +1090,13 @@ class ConnectionHandler:
             ]
 
         volume_tools = self._get_volume_compatible_tools(functions)
+        exact_tool_names = set(tool_names)
         self.logger.bind(tag=TAG).info(
             f"[tool_diag] session={self.session_id} tool_count={len(tool_names)} "
             f"volume_tool_count={len(volume_tools)}"
+        )
+        self.logger.bind(tag=TAG).info(
+            f"[tool_diag] volume_tool_exposed_to_llm={VOLUME_TOOL_NAME in exact_tool_names}"
         )
         self.logger.bind(tag=TAG).debug(
             f"[tool_diag] exposed_tools={tool_names}"
@@ -920,6 +1110,33 @@ class ConnectionHandler:
             self.logger.bind(tag=TAG).warning(
                 "[tool_diag] volume_intent_detected_but_no_volume_tool_exposed"
             )
+
+    @staticmethod
+    def _extract_function_names(functions):
+        if not functions:
+            return []
+
+        return [
+            function.get("function", {}).get("name", "")
+            for function in functions
+            if function.get("function", {}).get("name", "")
+        ]
+
+    def _get_functions_for_llm(self):
+        if not self.func_handler:
+            return None
+
+        functions = self.func_handler.get_functions()
+        function_names = self._extract_function_names(functions)
+
+        if hasattr(self, "mcp_client") and self.mcp_client:
+            device_mcp_tools = self.mcp_client.get_available_tools()
+            device_mcp_tool_names = set(self._extract_function_names(device_mcp_tools))
+            missing_mcp_tools = sorted(device_mcp_tool_names - set(function_names))
+            if missing_mcp_tools:
+                self.func_handler.tool_manager.refresh_tools()
+                functions = self.func_handler.get_functions()
+        return functions
 
     def chat(self, query, depth=0):
         if query is not None:
@@ -982,13 +1199,18 @@ class ConnectionHandler:
 
         # Define intent functions
         functions = None
-        # 达到最大深度时，禁用工具调用，强制 LLM 直接回答
-        if (
+        if self._try_handle_direct_volume_command(query, depth):
+            return
+        use_function_call = (
                 self.intent_type == "function_call"
                 and hasattr(self, "func_handler")
                 and not force_final_answer
+                and (depth > 0 or self._looks_like_operational_request(query))
+        )
+        if (
+                use_function_call
         ):
-            functions = self.func_handler.get_functions()
+            functions = self._get_functions_for_llm()
             self._log_tool_exposure_diagnostics(query, functions, depth)
 
         # 长对话工具调用规则强化：动态生成基于当前可用工具的提醒

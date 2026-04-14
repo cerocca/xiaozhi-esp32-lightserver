@@ -15,6 +15,8 @@ from .device_mcp import DeviceMCPExecutor
 from .mcp_endpoint import MCPEndpointExecutor
 from core.handle.sendAudioHandle import send_display_message
 
+VOLUME_TOOL_NAME = "self.audio_speaker.set_volume"
+
 
 class UnifiedToolHandler:
     """统一工具处理器"""
@@ -119,12 +121,42 @@ class UnifiedToolHandler:
 
     def get_functions(self) -> List[Dict[str, Any]]:
         """获取所有工具的函数描述"""
-        return self.tool_manager.get_function_descriptions()
+        if hasattr(self.conn, "mcp_client") and self.conn.mcp_client:
+            device_mcp_tools = self.conn.mcp_client.get_available_tools()
+            device_mcp_tool_names = {
+                tool.get("function", {}).get("name", "")
+                for tool in device_mcp_tools
+                if tool.get("function", {}).get("name", "")
+            }
+            exposed_tool_names = set(self.tool_manager.get_supported_tool_names())
+            missing_device_mcp_tools = sorted(device_mcp_tool_names - exposed_tool_names)
+            if missing_device_mcp_tools:
+                self.logger.warning(
+                    f"[tool_diag] refreshing_tool_cache_missing_device_mcp_tools={missing_device_mcp_tools}"
+                )
+                self.tool_manager.refresh_tools()
+
+        functions = self.tool_manager.get_function_descriptions()
+        function_names = [
+            function.get("function", {}).get("name", "")
+            for function in functions
+            if function.get("function", {}).get("name", "")
+        ]
+        self.logger.info(
+            f"[tool_diag] unified_tool_handler_get_functions={function_names}"
+        )
+        self.logger.info(
+            f"[tool_diag] volume_tool_in_get_functions={VOLUME_TOOL_NAME in function_names}"
+        )
+        return functions
 
     def current_support_functions(self) -> List[str]:
         """获取当前支持的函数名称列表"""
         func_names = self.tool_manager.get_supported_tool_names()
         self.logger.info(f"当前支持的函数列表: {func_names}")
+        self.logger.info(
+            f"[tool_diag] volume_tool_in_current_support_functions={VOLUME_TOOL_NAME in func_names}"
+        )
         return func_names
 
     def upload_functions_desc(self):

@@ -8,6 +8,8 @@ from ..base import ToolType, ToolDefinition, ToolExecutor
 from plugins_func.register import Action, ActionResponse
 from .mcp_handler import call_mcp_tool
 
+VOLUME_TOOL_NAME = "self.audio_speaker.set_volume"
+
 
 class DeviceMCPExecutor(ToolExecutor):
     """设备端MCP工具执行器"""
@@ -82,6 +84,13 @@ class DeviceMCPExecutor(ToolExecutor):
                     name=tool_name, description=tool, tool_type=ToolType.DEVICE_MCP
                 )
 
+        tool_names = list(tools.keys())
+        self.conn.logger.info(
+            f"[tool_diag] device_mcp_executor_tools={tool_names}"
+        )
+        self.conn.logger.info(
+            f"[tool_diag] volume_tool_in_device_mcp_executor={VOLUME_TOOL_NAME in tool_names}"
+        )
         return tools
 
     def has_tool(self, tool_name: str) -> bool:

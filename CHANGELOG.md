@@ -3,6 +3,13 @@
 
 ## [Unreleased]
 
+### Dev
+- enable bind mount of server code in Docker for faster development workflow
+- avoid rebuilding container on every Python change (use docker compose restart instead)
+
+### Notes
+- bind mount is intended for development only and should be removed or disabled in production setups
+
 ### Fixed
 - fix device speaking Chinese on standby due to inherited `end_prompt` in default server config
 - workaround: override `end_prompt.enable=false` in runtime config

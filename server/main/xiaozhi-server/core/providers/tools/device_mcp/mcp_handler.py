@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
 TAG = __name__
 logger = setup_logging()
+VOLUME_TOOL_NAME = "self.audio_speaker.set_volume"
 
 
 class MCPClient:
@@ -165,6 +166,17 @@ async def handle_mcp_message(
                 logger.bind(tag=TAG).info(
                     f"客户端设备支持的工具数量: {len(tools_data)}"
                 )
+                raw_tool_names = [
+                    tool.get("name", "")
+                    for tool in tools_data
+                    if isinstance(tool, dict)
+                ]
+                logger.bind(tag=TAG).info(
+                    f"[tool_diag] device_mcp_tools_list_raw={raw_tool_names}"
+                )
+                logger.bind(tag=TAG).info(
+                    f"[tool_diag] volume_tool_in_device_mcp_raw={VOLUME_TOOL_NAME in raw_tool_names}"
+                )
 
                 for i, tool in enumerate(tools_data):
                     if not isinstance(tool, dict):
@@ -187,6 +199,14 @@ async def handle_mcp_message(
                         "description": description,
                         "inputSchema": input_schema,
                     }
+                    logger.bind(tag=TAG).info(
+                        f"[tool_diag] device_mcp_tool_parsed raw={name} parsed={new_tool['name']} "
+                        f"schema_keys={list(input_schema.get('properties', {}).keys())}"
+                    )
+                    if name == VOLUME_TOOL_NAME:
+                        logger.bind(tag=TAG).info(
+                            "[tool_diag] volume_tool_parsed_from_device_mcp_response"
+                        )
                     await mcp_client.add_tool(new_tool)
                     logger.bind(tag=TAG).debug(f"客户端工具 #{i+1}: {name}")
 
@@ -203,6 +223,14 @@ async def handle_mcp_message(
                                 original_name, sanitized_name
                             )
                         tool_data["description"] = description
+
+                normalized_tool_names = list(mcp_client.tools.keys())
+                logger.bind(tag=TAG).info(
+                    f"[tool_diag] device_mcp_tools_normalized={normalized_tool_names}"
+                )
+                logger.bind(tag=TAG).info(
+                    f"[tool_diag] volume_tool_in_device_mcp_normalized={VOLUME_TOOL_NAME in normalized_tool_names}"
+                )
 
                 next_cursor = result.get("nextCursor", "")
                 if next_cursor:

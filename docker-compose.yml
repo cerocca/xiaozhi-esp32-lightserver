@@ -19,5 +19,7 @@ services:
     volumes:
       - ./data:/opt/xiaozhi-esp32-server/data
       - ./models/SenseVoiceSmall/model.pt:/opt/xiaozhi-esp32-server/models/SenseVoiceSmall/model.pt
+      # DEV ONLY: bind mount for live code editing (remove in production)
+      - ./server/main/xiaozhi-server:/opt/xiaozhi-esp32-server
     extra_hosts:
       - "host.docker.internal:host-gateway"
