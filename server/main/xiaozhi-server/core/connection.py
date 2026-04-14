@@ -47,6 +47,7 @@ from core.utils import textUtils
 
 TAG = __name__
 VOLUME_TOOL_NAME = "self.audio_speaker.set_volume"
+BRIGHTNESS_TOOL_NAME = "self.screen.set_brightness"
 DEVICE_STATUS_TOOL_NAME = "self.get_device_status"
 
 # 工具调用规则 - 用于动态注入提醒
@@ -865,6 +866,22 @@ class ConnectionHandler:
 
         return compatible_tools
 
+    def _get_brightness_compatible_tools(self, functions):
+        if not functions:
+            return []
+
+        compatible_tools = []
+        keywords = ["brightness", "screen", "亮度", "屏幕"]
+
+        for tool in functions:
+            function_info = tool.get("function", {})
+            tool_name = function_info.get("name", "")
+            tool_text = f"{tool_name} {self._stringify_tool_descriptor(tool)}"
+            if any(keyword in tool_text for keyword in keywords):
+                compatible_tools.append(tool_name)
+
+        return compatible_tools
+
     @staticmethod
     def _is_volume_request(query):
         if not query:
@@ -877,6 +894,22 @@ class ConnectionHandler:
             r"(?:imposta|regola|metti)\s+(?:il\s+)?volume",
             r"(?:increase|decrease|turn up|turn down|set|adjust)\s+(?:the\s+)?volume",
             r"(?:调大|调小|增大|降低|设置|調大|調小|設置).{0,4}音量",
+        ]
+        return any(re.search(pattern, text) for pattern in patterns)
+
+    @staticmethod
+    def _is_brightness_request(query):
+        if not query:
+            return False
+
+        text = query.lower()
+        patterns = [
+            r"(?:imposta|regola)\s+(?:la\s+)?luminosit(?:à|a)",
+            r"(?:aumenta|alza)\s+(?:la\s+)?luminosit(?:à|a)",
+            r"(?:diminuisci|abbassa)\s+(?:la\s+)?luminosit(?:à|a)",
+            r"luminosit(?:à|a)\s+(?:al\s+)?(?:massimo|minimo|\d{1,3})",
+            r"(?:set|increase|raise|decrease|lower)\s+(?:the\s+)?brightness",
+            r"brightness\s+(?:to\s+)?(?:max(?:imum)?|min(?:imum)?|\d{1,3})",
         ]
         return any(re.search(pattern, text) for pattern in patterns)
 
@@ -896,6 +929,10 @@ class ConnectionHandler:
     @staticmethod
     def _clamp_volume(volume):
         return max(0, min(100, int(volume)))
+
+    @staticmethod
+    def _clamp_brightness(brightness):
+        return max(0, min(100, int(brightness)))
 
     def _parse_direct_volume_command(self, query):
         if not query:
@@ -953,6 +990,57 @@ class ConnectionHandler:
 
         return None
 
+    def _parse_direct_brightness_command(self, query):
+        if not query:
+            return None
+
+        text = query.lower().strip()
+
+        explicit_patterns = [
+            r"(?:imposta\s+)?(?:la\s+)?luminosit(?:à|a)\s+(?:(?:a|al)\s*)?(\d{1,3})",
+            r"(?:set\s+)?brightness\s+(?:to\s+)?(\d{1,3})",
+        ]
+        for pattern in explicit_patterns:
+            match = re.search(pattern, text)
+            if match:
+                return {
+                    "target_brightness": self._clamp_brightness(match.group(1)),
+                    "response_text": f"Luminosita impostata a {self._clamp_brightness(match.group(1))}.",
+                }
+
+        min_max_patterns = [
+            (r"(?:imposta\s+)?(?:la\s+)?luminosit(?:à|a)\s+al\s+massimo", 100),
+            (r"(?:imposta\s+)?(?:la\s+)?luminosit(?:à|a)\s+al\s+minimo", 0),
+            (r"brightness\s+(?:max|maximum)", 100),
+            (r"brightness\s+(?:min|minimum)", 0),
+            (r"(?:set\s+)?brightness\s+to\s+(?:max|maximum)", 100),
+            (r"(?:set\s+)?brightness\s+to\s+(?:min|minimum)", 0),
+        ]
+        for pattern, target_brightness in min_max_patterns:
+            if re.search(pattern, text):
+                return {
+                    "target_brightness": target_brightness,
+                    "response_text": f"Luminosita impostata a {target_brightness}.",
+                }
+
+        up_patterns = [
+            r"(?:aumenta|alza)\s+(?:la\s+)?luminosit(?:à|a)",
+            r"(?:increase|raise)\s+(?:the\s+)?brightness",
+        ]
+        for pattern in up_patterns:
+            if re.search(pattern, text):
+                return {"brightness_delta": 10}
+
+        down_patterns = [
+            r"(?:diminuisci|abbassa)\s+(?:la\s+)?luminosit(?:à|a)",
+            r"(?:decrease|lower)\s+(?:the\s+)?brightness",
+        ]
+        for pattern in down_patterns:
+            if re.search(pattern, text):
+                return {"brightness_delta": -10}
+
+        return None
+
     @staticmethod
     def _extract_volume_from_status_result(raw_result):
         payload = raw_result
@@ -981,6 +1069,39 @@ class ConnectionHandler:
         if "volume" in payload:
             try:
                 return ConnectionHandler._clamp_volume(payload["volume"])
+            except Exception:
+                return None
+
+        return None
+
+    @staticmethod
+    def _extract_brightness_from_status_result(raw_result):
+        payload = raw_result
+        if isinstance(raw_result, str):
+            try:
+                payload = json.loads(raw_result)
+            except Exception:
+                json_str = extract_json_from_string(raw_result)
+                if json_str is None:
+                    return None
+                try:
+                    payload = json.loads(json_str)
+                except Exception:
+                    return None
+
+        if not isinstance(payload, dict):
+            return None
+
+        screen = payload.get("screen", {})
+        if isinstance(screen, dict) and "brightness" in screen:
+            try:
+                return ConnectionHandler._clamp_brightness(screen["brightness"])
+            except Exception:
+                return None
+
+        if "brightness" in payload:
+            try:
+                return ConnectionHandler._clamp_brightness(payload["brightness"])
             except Exception:
                 return None
 
@@ -1077,6 +1198,73 @@ class ConnectionHandler:
         self._speak_direct_text(response_text)
         return True
 
+    def _try_handle_direct_brightness_command(self, query, depth):
+        if depth != 0 or not query or not hasattr(self, "func_handler"):
+            return False
+
+        brightness_command = self._parse_direct_brightness_command(query)
+        if brightness_command is None:
+            if self._is_brightness_request(query):
+                self.logger.bind(tag=TAG).debug(
+                    f"[tool_diag] direct_brightness_parse_miss query={query}"
+                )
+            return False
+
+        functions = self._get_functions_for_llm()
+        function_names = set(self._extract_function_names(functions))
+        if BRIGHTNESS_TOOL_NAME not in function_names:
+            return False
+
+        target_brightness = brightness_command.get("target_brightness")
+        if target_brightness is None:
+            if DEVICE_STATUS_TOOL_NAME not in function_names:
+                return False
+            try:
+                status_result = self._call_tool_direct(DEVICE_STATUS_TOOL_NAME, {})
+            except Exception as e:
+                self.logger.bind(tag=TAG).warning(
+                    f"[tool_diag] direct_brightness_status_failed error={e}"
+                )
+                return False
+
+            current_brightness = self._extract_brightness_from_status_result(
+                status_result.result
+            )
+            if current_brightness is None:
+                self.logger.bind(tag=TAG).warning(
+                    "[tool_diag] direct_brightness_status_missing_current_brightness"
+                )
+                return False
+
+            target_brightness = self._clamp_brightness(
+                current_brightness + brightness_command["brightness_delta"]
+            )
+            brightness_command["response_text"] = (
+                f"Luminosita impostata a {target_brightness}."
+            )
+
+        try:
+            result = self._call_tool_direct(
+                BRIGHTNESS_TOOL_NAME, {"brightness": target_brightness}
+            )
+        except Exception as e:
+            self.logger.bind(tag=TAG).warning(
+                f"[tool_diag] direct_brightness_tool_failed error={e}"
+            )
+            return False
+
+        if result.action not in [Action.REQLLM, Action.RESPONSE, Action.NONE]:
+            return False
+
+        response_text = brightness_command.get(
+            "response_text", f"Luminosita impostata a {target_brightness}."
+        )
+        self.logger.bind(tag=TAG).info(
+            f"[tool_diag] direct_brightness_bypass_success target_brightness={target_brightness}"
+        )
+        self._speak_direct_text(response_text)
+        return True
+
     def _log_tool_exposure_diagnostics(self, query, functions, depth):
         if depth != 0:
             return
@@ -1090,13 +1278,18 @@ class ConnectionHandler:
             ]
 
         volume_tools = self._get_volume_compatible_tools(functions)
+        brightness_tools = self._get_brightness_compatible_tools(functions)
         exact_tool_names = set(tool_names)
         self.logger.bind(tag=TAG).info(
             f"[tool_diag] session={self.session_id} tool_count={len(tool_names)} "
-            f"volume_tool_count={len(volume_tools)}"
+            f"volume_tool_count={len(volume_tools)} "
+            f"brightness_tool_count={len(brightness_tools)}"
         )
         self.logger.bind(tag=TAG).info(
             f"[tool_diag] volume_tool_exposed_to_llm={VOLUME_TOOL_NAME in exact_tool_names}"
+        )
+        self.logger.bind(tag=TAG).info(
+            f"[tool_diag] brightness_tool_exposed_to_llm={BRIGHTNESS_TOOL_NAME in exact_tool_names}"
         )
         self.logger.bind(tag=TAG).debug(
             f"[tool_diag] exposed_tools={tool_names}"
@@ -1105,10 +1298,18 @@ class ConnectionHandler:
             self.logger.bind(tag=TAG).info(
                 f"[tool_diag] volume_compatible_tools={volume_tools}"
             )
+        if brightness_tools:
+            self.logger.bind(tag=TAG).info(
+                f"[tool_diag] brightness_compatible_tools={brightness_tools}"
+            )
 
         if self._is_volume_request(query) and not volume_tools:
             self.logger.bind(tag=TAG).warning(
                 "[tool_diag] volume_intent_detected_but_no_volume_tool_exposed"
+            )
+        if self._is_brightness_request(query) and not brightness_tools:
+            self.logger.bind(tag=TAG).warning(
+                "[tool_diag] brightness_intent_detected_but_no_brightness_tool_exposed"
             )
 
     @staticmethod
@@ -1200,6 +1401,8 @@ class ConnectionHandler:
         # Define intent functions
         functions = None
         if self._try_handle_direct_volume_command(query, depth):
+            return
+        if self._try_handle_direct_brightness_command(query, depth):
             return
         use_function_call = (
                 self.intent_type == "function_call"
