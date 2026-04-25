@@ -14,6 +14,26 @@
 <section class="card ai-stack-section ai-stack-section-managed">
   <div class="section-head">
     <div>
+      <h3 class="section-title">Runtime Profiles</h3>
+      <div class="muted">Valori attuali risolti dalla configurazione runtime.</div>
+    </div>
+  </div>
+
+  <div class="status-grid" style="margin-top: 12px;">
+    {% for item in runtime_profiles %}
+      <div class="status-item">
+        <span class="muted">{{ item.label }}</span>
+        <div style="margin-top: 8px;">
+          <code>{{ item.value or "non impostato" }}</code>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="card ai-stack-section ai-stack-section-managed">
+  <div class="section-head">
+    <div>
       <h3 class="section-title">Gestione da UI</h3>
       <div class="muted">Moduli con pagina dedicata e gestione attiva direttamente dalla Admin UI.</div>
     </div>
@@ -24,29 +44,41 @@
       <article class="card ai-stack-card">
         <div class="ai-stack-card-head">
           <h3 class="section-title">{{ item.title }}</h3>
-          <div class="ai-stack-badge-group">
-            <span class="ai-stack-label">Config</span>
-            <div class="ai-stack-badges">
-            {% for badge in item.config_badges %}
-              <span class="badge {% if badge.label == 'LOCALE' %}local{% elif badge.label == 'REMOTO' %}info{% elif badge.label == 'READ-ONLY' %}readonly{% else %}{{ badge.kind }}{% endif %}">{{ badge.label }}</span>
-            {% endfor %}
-            </div>
+          <div class="ai-stack-runtime">
+            <span class="ai-stack-label">Runtime</span>
+            <span class="badge {{ item.runtime_badge.kind }}">{{ item.runtime_badge.label }}</span>
           </div>
         </div>
         <p class="muted ai-stack-description">{{ item.description }}</p>
         <div class="ai-stack-summary">
-          <span class="muted">Attivo:</span>
-          <code>{{ item.active_profile or "non disponibile" }}</code>
+          <span class="muted">Profilo attivo</span>
+          <div style="margin-top: 6px;">
+            <strong>{{ item.active_profile or "non disponibile" }}</strong>
+          </div>
         </div>
-        <div class="ai-stack-runtime">
-          <span class="ai-stack-label">Runtime</span>
-          <span class="badge {{ item.runtime_badge.kind }}">{{ item.runtime_badge.label }}</span>
+        <div class="status-grid" style="margin-top: 12px;">
+          <div class="status-item">
+            <span class="muted">runtime.{{ item.slug }}_profile</span>
+            <div style="margin-top: 6px;"><code>{{ item.runtime_profile or "non impostato" }}</code></div>
+          </div>
+          <div class="status-item">
+            <span class="muted">Profili disponibili</span>
+            <div style="margin-top: 6px;"><strong>{{ item.available_profiles_count }}</strong></div>
+          </div>
+        </div>
+        <div class="ai-stack-badge-group" style="margin-top: 12px;">
+          <span class="ai-stack-label">Config</span>
+          <div class="ai-stack-badges">
+          {% for badge in item.config_badges %}
+            <span class="badge {% if badge.label == 'LOCALE' %}local{% elif badge.label == 'REMOTO' %}info{% elif badge.label == 'READ-ONLY' %}readonly{% else %}{{ badge.kind }}{% endif %}">{{ badge.label }}</span>
+          {% endfor %}
+          </div>
         </div>
         {% if item.runtime_detail %}
           <div class="muted" style="margin-top: 6px;">{{ item.runtime_detail }}</div>
         {% endif %}
         <div class="actions ai-stack-card-actions">
-          <a class="button-link" href="{{ item.href }}">Apri {{ item.title }}</a>
+          <a class="button-link" href="{{ item.href }}">{{ item.manage_label }}</a>
         </div>
       </article>
     {% endfor %}

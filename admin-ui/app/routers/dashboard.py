@@ -5,11 +5,11 @@ from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 
 from app.config import TEMPLATES_DIR
-from app.services.asr_service import get_active_asr
+from app.services.asr_service import get_active_asr, get_asr_page_data
 from app.services.health_service import get_health_status
-from app.services.llm_service import get_active_llm
+from app.services.llm_service import get_active_llm, get_llm_page_data
 from app.services.status_service import get_dashboard_status
-from app.services.tts_service import get_active_tts
+from app.services.tts_service import get_active_tts, get_tts_page_data
 
 router = APIRouter()
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
@@ -159,13 +159,24 @@ def dashboard(request: Request):
 @router.get("/ai")
 def ai_stack_index(request: Request):
     health_status = get_health_status()
+    llm_page_data = get_llm_page_data()
+    asr_page_data = get_asr_page_data()
+    tts_page_data = get_tts_page_data()
+
+    llm_active = llm_page_data.get("active", {})
+    asr_active = asr_page_data.get("active", {})
+    tts_active = tts_page_data.get("active", {})
+
     ui_items = [
         {
             "title": "LLM",
             "href": "/llm",
             "slug": "llm",
             "description": "Generazione delle risposte (modello e profili)",
-            "active_profile": str(get_active_llm().get("profile_name", "") or "").strip(),
+            "manage_label": "Manage LLM",
+            "active_profile": str(llm_active.get("profile_name", "") or "").strip(),
+            "runtime_profile": str(llm_page_data.get("runtime_llm_profile", "") or "").strip(),
+            "available_profiles_count": len(llm_page_data.get("profiles", [])),
             "config_badges": _build_ui_badges("llm"),
             "runtime_badge": _build_runtime_badge("llm", health_status),
             "runtime_detail": _build_runtime_detail("llm", health_status),
@@ -175,7 +186,10 @@ def ai_stack_index(request: Request):
             "href": "/asr",
             "slug": "asr",
             "description": "Speech -> text (riconoscimento vocale)",
-            "active_profile": str(get_active_asr().get("profile_name", "") or "").strip(),
+            "manage_label": "Manage ASR",
+            "active_profile": str(asr_active.get("profile_name", "") or "").strip(),
+            "runtime_profile": str(asr_page_data.get("runtime_asr_profile", "") or "").strip(),
+            "available_profiles_count": len(asr_page_data.get("profiles", [])),
             "config_badges": _build_ui_badges("asr"),
             "runtime_badge": _build_runtime_badge("asr", health_status),
             "runtime_detail": _build_runtime_detail("asr", health_status),
@@ -185,10 +199,27 @@ def ai_stack_index(request: Request):
             "href": "/tts",
             "slug": "tts",
             "description": "Text -> speech (sintesi vocale)",
-            "active_profile": str(get_active_tts().get("profile_name", "") or "").strip(),
+            "manage_label": "Manage TTS",
+            "active_profile": str(tts_active.get("profile_name", "") or "").strip(),
+            "runtime_profile": str(tts_page_data.get("runtime_tts_profile", "") or "").strip(),
+            "available_profiles_count": len(tts_page_data.get("profiles", [])),
             "config_badges": _build_ui_badges("tts"),
             "runtime_badge": _build_runtime_badge("tts", health_status),
             "runtime_detail": _build_runtime_detail("tts", health_status),
+        },
+    ]
+    runtime_profiles = [
+        {
+            "label": "runtime.llm_profile",
+            "value": str(llm_page_data.get("runtime_llm_profile", "") or "").strip(),
+        },
+        {
+            "label": "runtime.asr_profile",
+            "value": str(asr_page_data.get("runtime_asr_profile", "") or "").strip(),
+        },
+        {
+            "label": "runtime.tts_profile",
+            "value": str(tts_page_data.get("runtime_tts_profile", "") or "").strip(),
         },
     ]
     device_item = {
@@ -236,6 +267,7 @@ def ai_stack_index(request: Request):
             "request": request,
             "page_title": "AI Stack",
             "health_message": str(health_status.get("health_message", "") or "").strip(),
+            "runtime_profiles": runtime_profiles,
             "ui_items": ui_items,
             "device_item": device_item,
             "readonly_items": readonly_items,
