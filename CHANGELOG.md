@@ -1,70 +1,69 @@
 # Changelog
 
+All relevant Admin UI changes are recorded here.
 
 ## [Unreleased]
 
-### Monorepo
-- import companion Admin UI into `admin-ui/`
-- make Admin UI path/config handling work from the monorepo layout
-- update root documentation to describe the current monorepo state
+## [0.2.1] - 2026-04-25
 
-### Dev
-- enable bind mount of server code in Docker for faster development workflow
-- avoid rebuilding container on every Python change (use docker compose restart instead)
+### ✨ Added
+- AI Stack page now acts as entry point for Runtime Profiles
+- Display of:
+  - `runtime.llm_profile`
+  - `runtime.asr_profile`
+  - `runtime.tts_profile`
+- Per-module overview (LLM / ASR / TTS):
+  - active profile
+  - available profiles count
+  - runtime health badge
+- Direct navigation actions:
+  - “Manage LLM”
+  - “Manage ASR”
+  - “Manage TTS”
 
-### Notes
-- bind mount is intended for development only and should be removed or disabled in production setups
+### 🔄 Changed
+- Improved clarity of runtime vs configuration in LLM / ASR / TTS pages
+- Clearer distinction between:
+  - saving a profile
+  - switching active runtime profile
+  - restart requirement for applying changes
+- AI Stack layout reorganized to prioritize runtime visibility
 
-### Fixed
-- fix device speaking Chinese on standby due to inherited `end_prompt` in default server config
-- workaround: override `end_prompt.enable=false` in runtime config
-- restore working device volume control via MCP tool calling
-- add direct server-side bypass for clear volume commands to reduce latency
+### 🛠 Fixed
+- Prevented template crashes when `health_status` is missing
+- Made health rendering resilient across all module pages (`llm`, `asr`, `tts`)
 
-## v0.1.5
+## [0.1.5]
 
-Server deployment and packaging refinement release.
+### Improvements
+- UI Health UX completed:
+  - clear distinction between module error and backend unreachable
+  - UNKNOWN state when health is unavailable
+  - device disconnected is now neutral (not an error)
+  - details displayed as secondary context only
 
-### Added
-- `.env.example` for first-boot configuration
-- custom local Docker image build via root `Dockerfile`
-- `docker-compose.dev.yml` to preserve bind-mounted development workflow
+### Fixes
+- restored backward compatibility in health fallback payload
+- ensured top-level health fields are always present (llm/asr/tts/device)
 
-### Changed
-- default `docker-compose.yml` now builds a local custom image from this repository
-- runtime no longer depends on a host-mounted `server/main/xiaozhi-server` source tree
-- first-boot setup flow is clearer and more deployment-oriented
-- documentation now distinguishes example TTS config from the live runtime TTS profile
+## [0.1.1]
+- Improved Admin UI portability through centralized configuration.
+- Introduced .env.example for simplified setup.
+- Removed hardcoded paths and used settings/env consistently.
+- Improved documentation (README and SETUP) for installation from zero.
+- Fixed wrapper scripts (xserver.sh, piper.sh) to support environment variables.
+- Improved handling of internal paths (backup, log, script) relative to the project root.
 
-### Notes
-- mutable runtime data remains host-mounted through `./data`
-- the SenseVoice model remains an external mounted asset
-- the active live TTS runtime path is profile-based and may differ from example OpenAI TTS snippets in docs
-
-
-## v0.1.0
-
-Initial stable deployment baseline for this repository.
-
-This project is derived from the `xinnan-tech/xiaozhi-esp32-server` codebase and adapts the upstream server structure for a lighter deployment-focused setup.
-
-### Added
-- Docker-first deployment flow
-- Clear separation of ports: `8000` for WebSocket, `8003` for HTTP API endpoints
-- Backward-compatible `/api/health` top-level contract: `llm`, `asr`, `tts`, `device`
-- Additive `/api/health` diagnostic details: `status`, `reason`, `http_status`, `endpoint`
-- Quick verification commands and deployment verification flow
-- Host-agnostic deployment and setup documentation
-- Stable SERVER <-> ADMIN UI integration contract
-- `/api/health` documented as the backend runtime source of truth
-
-### Fixed
-- Confusion between websocket and HTTP endpoints
-- Missing health diagnostics context
-- Deployment guidance that depended on host-specific assumptions
-
-### Notes
-- External providers used for first boot
-- Local model setup documented as advanced scenario
-- Plain HTTP requests sent to port `8000` return `Server is running`; this is expected
-- Admin UI should use `http://<SERVER_HOST>:<HTTP_PORT>/api/health`
+## [0.1.0]
+- First stable milestone of the server-rendered Admin UI.
+- Initial dashboard with main service status and quick access to logs.
+- Introduced the AI Stack section to organize the available AI modules.
+- Basic LLM configuration with main profile management.
+- Core operational pages for config editor, backups, logs, and devices.
+- Initial management of Xiaozhi server, Piper, and runtime configuration.
+- Added full CRUD management for ASR and TTS profiles.
+- Improved the AI Stack page with a more consistent layout and better aligned cards.
+- Initial integration of runtime health from the Xiaozhi backend.
+- Added runtime device visibility in the UI.
+- Refined the dashboard with more consistent restart/stop/log actions.
+- Improved the TTS configuration experience with dropdown voice support for providers like Piper.
