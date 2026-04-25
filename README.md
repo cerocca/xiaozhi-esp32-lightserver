@@ -25,8 +25,9 @@ Current status:
 
 - server runtime still lives at `server/main/xiaozhi-server/`
 - Admin UI integration is still lightweight
-- Docker image / Compose packaging has not been updated for Admin UI yet
-- final packaging alignment remains a later phase
+- default Docker image / Compose packaging remains server-only
+- `admin-ui/` should currently be run from the host with its own `.venv` setup
+- optional Admin UI containerization remains future work
 
 Licensed under the MIT License.
 
@@ -190,10 +191,12 @@ docker compose up -d
 ### Read this before first boot
 
 - The built image already includes the server code from this repository.
+- The default Docker image and Compose flow package the server runtime only.
 - `data/.config.yaml` is still external and controls the live runtime behavior.
 - Local model files and similar assets are not automatically bundled into the image.
 - Some deployments use remote providers for LLM, ASR, or TTS, so those API endpoints and credentials must still be configured correctly.
 - Some local components, including Piper or local speech/model paths, may still require host-side provisioning depending on the profile you activate.
+- The companion Admin UI is part of the monorepo, but it is not included in the default Docker packaging yet.
 
 ### Dev mode (optional)
 
@@ -249,7 +252,9 @@ Admin UI integration note:
 - `admin-ui/` is now part of this repository
 - it was imported in Phase 1 and made path-aware in Phase 3
 - server runtime still lives at `server/main/xiaozhi-server/`
-- Docker image / Compose alignment for Admin UI is still pending the final packaging phase
+- default Docker / Compose remains server-only
+- `admin-ui/` should currently be run from the host with its own `.venv`
+- optional Admin UI containerization is still future work
 
 ---
 

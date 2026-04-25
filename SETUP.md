@@ -122,6 +122,8 @@ Notes:
 * the Admin UI uses `/api/health` as the backend source of truth
 * `XIAOZHI_DIR=..` points to the monorepo root, where `docker-compose.yml` lives
 * `XIAOZHI_CONFIG=../data/.config.yaml` points to the shared backend config
+* the default Docker image / Compose flow remains server-only in this phase
+* `admin-ui/` should currently be run from the host with its own `.venv` setup
 * detailed Admin UI setup remains in [`admin-ui/SETUP.md`](./admin-ui/SETUP.md)
 
 ## 4. Install the Project
