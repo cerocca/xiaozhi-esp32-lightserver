@@ -8,14 +8,18 @@
 [![scope](https://img.shields.io/badge/scope-self--hosted%20%2F%20LAN--first-6f42c1)](https://github.com/cerocca/xiaozhi-esp32-lightserver)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Deployment-focused server repository for an ESP32 device (xiaozhi based) + LLM stack, derived from the upstream project:
+Deployment-focused repository for an ESP32 device (xiaozhi based) + LLM stack, derived from the upstream project:
 
 👉 https://github.com/xinnan-tech/xiaozhi-esp32-server
 
 This repository adapts the upstream server structure for a lighter, Docker-first deployment setup and treats the server as the backend runtime source of truth.
 
-👉 Companion Admin UI (health, logs, device status, and runtime status views powered by `/api/health`) available at  
-[https://github.com/cerocca/xiaozhi-admin-ui](https://github.com/cerocca/xiaozhi-admin-ui)
+This repo now presents itself as a small monorepo:
+
+- `server/` = backend/runtime area
+- `admin-ui/` = companion web UI area
+
+The companion Admin UI was imported as-is in Phase 1 of the monorepo migration. Path/config integration between the backend and Admin UI is intentionally deferred to later phases.
 
 Licensed under the MIT License.
 
@@ -221,15 +225,23 @@ Expected result:
 
 ```
 .
+├── admin-ui/                  # companion Admin UI, imported as-is in Phase 1
 ├── data/                      # runtime config (mounted)
 ├── models/                    # optional host-provided local models
-├── server/main/xiaozhi-server # upstream server code
+├── server/                    # backend/runtime area
+│   └── main/xiaozhi-server    # current upstream server runtime location
 ├── Dockerfile                 # image packaging
 ├── docker-compose.yml         # runtime
 ├── docker-compose.dev.yml     # dev override
 ├── README.md
 ├── SETUP.md
 ```
+
+Admin UI integration note:
+
+- `admin-ui/` is now part of this repository
+- it was imported without path/config changes
+- backend/UI integration work will happen in later phases
 
 ---
 
