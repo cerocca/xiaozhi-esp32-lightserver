@@ -1,0 +1,475 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="card">
+  <div style="margin-bottom: 12px;">
+    <a class="back-link" href="/ai">&larr; Torna a AI Stack</a>
+  </div>
+  <h2>LLM Configuration</h2>
+
+  {% set active = active|default({}) %}
+  {% set selected = selected|default({}) %}
+  {% set profiles = profiles|default([]) %}
+  {% set presets = presets|default({}) %}
+
+  {% set active_profile_name = active.profile_name or "profilo non disponibile" %}
+  {% set active_provider_id = active.provider_id or "non disponibile" %}
+  {% set active_model = active.model or "model non disponibile" %}
+  {% set active_base_url = active.base_url or "non disponibile" %}
+  {% set runtime_profile_name = runtime_llm_profile or "non impostato" %}
+  {% set selected_profile_name = selected.profile_name or "" %}
+  {% set selected_provider_id = selected.provider_id or "groq" %}
+
+  <div class="card" style="margin-bottom: 16px;">
+    <strong>Stato attuale</strong><br>
+    <div class="status-grid" style="margin-top: 10px;">
+      <div class="status-item">
+        <span class="muted">Profilo attivo</span>
+        <div style="margin-top: 6px;">
+          <strong>{{ active_profile_name }}</strong>
+          {% if active.profile_name %}
+            <span class="badge ok">ATTIVO</span>
+          {% endif %}
+          {% if active.is_legacy %}
+            <span class="badge warn">LEGACY</span>
+          {% endif %}
+        </div>
+        {% if runtime_profile_name and runtime_profile_name != "non impostato" and runtime_profile_name != active_profile_name %}
+          <div class="muted" style="margin-top: 8px;">
+            runtime.llm_profile: <code>{{ runtime_profile_name }}</code>
+          </div>
+        {% endif %}
+      </div>
+      <div class="status-item">
+        <span class="muted">Provider attivo</span>
+        <div style="margin-top: 6px;"><strong>{{ active_provider_id }}</strong></div>
+      </div>
+      <div class="status-item">
+        <span class="muted">Model attivo</span>
+        <div style="margin-top: 6px;"><strong>{{ active_model }}</strong></div>
+      </div>
+      <div class="status-item">
+        <span class="muted">Base URL attivo</span>
+        <div style="margin-top: 6px;"><code>{{ active_base_url }}</code></div>
+      </div>
+      <div class="status-item">
+        <span class="muted">API key</span>
+        <div style="margin-top: 6px;">
+          {% if active.has_api_key %}
+            <span class="badge ok">PRESENTE</span>
+          {% else %}
+            <span class="badge err">MANCANTE</span>
+            {% if active.requires_api_key %}
+              <span class="badge warn">SENZA API KEY</span>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="muted" style="margin-top: 10px;">
+      Lo stato visualizzato distingue il valore grezzo di <code>runtime.llm_profile</code> dal profilo realmente attivo risolto dal backend. La selezione in pagina non cambia il runtime finché non usi <strong>Rendi attivo</strong>.
+    </div>
+    {% if legacy_selected_module_name %}
+      <div class="muted" style="margin-top: 6px;">
+        Compatibilità legacy: <code>selected_module.llm = {{ legacy_selected_module_name }}</code>
+      </div>
+    {% endif %}
+    {% if active.is_legacy and active.legacy_note %}
+      <div class="flash flash-warn" style="margin-top: 12px;">
+        {{ active.legacy_note }}
+      </div>
+    {% endif %}
+  </div>
+
+  {% if result %}
+    <div class="flash {% if result.ok %}flash-ok{% else %}flash-err{% endif %}">
+      <div>
+        <strong>
+          {% if result.ok %}Operazione completata{% else %}Operazione non riuscita{% endif %}
+        </strong>
+      </div>
+      {% if result.message %}
+        <div style="margin-top: 6px;">{{ result.message }}</div>
+      {% endif %}
+      {% if result.backup_path %}
+        <div style="margin-top: 8px;">Backup salvato in: <code>{{ result.backup_path }}</code></div>
+      {% endif %}
+      {% if result.selected_module_name %}
+        <div style="margin-top: 6px;">Profilo interessato: <code>{{ result.selected_module_name }}</code></div>
+      {% endif %}
+      {% if result.active_model %}
+        <div style="margin-top: 6px;">Model: <strong>{{ result.active_model }}</strong></div>
+      {% endif %}
+      {% if result.restart_result %}
+        <div style="margin-top: 8px;">
+          Restart Xiaozhi:
+          {% if result.restart_result.ok %}
+            <span class="badge ok">OK</span>
+          {% else %}
+            <span class="badge err">ERRORE</span>
+          {% endif %}
+          {% if result.restart_result.message %}
+            <div class="muted" style="margin-top: 6px;">{{ result.restart_result.message }}</div>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <div class="card" style="margin-bottom: 16px;">
+    <strong>Profili configurati</strong><br>
+    <div class="muted" style="margin-top: 6px;">
+      Ogni profilo corrisponde a una chiave sotto <code>LLM</code>. Il profilo attivo resta controllato da <code>runtime.llm_profile</code>.
+    </div>
+
+    {% if profiles %}
+      <div style="margin-top: 12px;">
+        {% for profile in profiles %}
+          <div class="card profile-card {% if profile.is_active %}profile-card-active{% endif %} {% if selected_profile_name and selected_profile_name == profile.profile_name %}profile-card-selected{% endif %}" style="margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap;">
+              <div>
+                <div>
+                  <strong>{{ profile.profile_name }}</strong>
+                  {% if profile.is_active %}
+                    <span class="badge ok">ATTIVO</span>
+                  {% endif %}
+                  {% if selected_profile_name and selected_profile_name == profile.profile_name %}
+                    <span class="badge info">IN MODIFICA</span>
+                  {% endif %}
+                  {% if profile.is_legacy %}
+                    <span class="badge warn">LEGACY</span>
+                  {% endif %}
+                  {% if not profile.has_api_key %}
+                    <span class="badge {% if profile.requires_api_key %}err{% else %}muted{% endif %}">
+                      {% if profile.requires_api_key %}SENZA API KEY{% else %}API KEY ASSENTE{% endif %}
+                    </span>
+                  {% endif %}
+                </div>
+                <div class="muted" style="margin-top: 6px;">Provider: {{ profile.provider_id or "n/d" }}</div>
+                <div class="muted" style="margin-top: 4px;">Model: {{ profile.model or "n/d" }}</div>
+                <div class="muted" style="margin-top: 4px;">Base URL: <code title="{{ profile.base_url or 'n/d' }}">{{ (profile.base_url or "n/d")|truncate(54, True) }}</code></div>
+                <div class="muted" style="margin-top: 4px;">API key: {% if profile.has_api_key %}✔ presente{% else %}✖ mancante{% endif %}</div>
+                {% if profile.is_legacy and profile.legacy_note %}
+                  <div class="muted" style="margin-top: 6px;">{{ profile.legacy_note }}</div>
+                {% endif %}
+              </div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a class="button-link" href="/llm?profile={{ profile.profile_name }}">Modifica</a>
+                {% if not profile.is_active %}
+                  <form method="post" action="/llm/providers/switch" style="margin: 0;">
+                    <input type="hidden" name="profile_name" value="{{ profile.profile_name }}">
+                    <button type="submit">Rendi attivo</button>
+                  </form>
+                  <form
+                    method="post"
+                    action="/llm/providers/delete"
+                    style="margin: 0;"
+                    onsubmit="return confirm('Eliminare il profilo ' + '{{ profile.profile_name }}' + '?');"
+                  >
+                    <input type="hidden" name="profile_name" value="{{ profile.profile_name }}">
+                    <input type="hidden" name="selected_profile_name" value="{{ selected_profile_name }}">
+                    <button type="submit">Elimina</button>
+                  </form>
+                {% else %}
+                  <button type="button" disabled title="Profilo attivo non eliminabile">Elimina (attivo)</button>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="flash" style="margin-top: 12px;">
+        Nessun profilo LLM trovato nella configurazione. Puoi crearne uno dal form qui sotto.
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="card" style="margin-bottom: 16px;">
+    <strong>Crea nuovo profilo</strong><br>
+    <form method="post" action="/llm/providers/create" style="margin-top: 12px;">
+      <div class="form-grid">
+        <div>
+          <label for="create_provider_id">Provider preset</label>
+          <select id="create_provider_id" name="provider_id">
+            {% for provider_name in presets.keys() %}
+              <option value="{{ provider_name }}">{{ provider_name|capitalize }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label for="create_profile_name">Nome profilo</label>
+          <input
+            type="text"
+            id="create_profile_name"
+            name="profile_name"
+            value=""
+            placeholder="Es. my_openai_fast"
+            autocomplete="off"
+          >
+          <div class="muted" style="margin-top: 6px;">
+            Se lasci vuoto, viene proposto il nome standard del preset con suffisso progressivo se serve.
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="submit">Crea profilo</button>
+      </div>
+    </form>
+  </div>
+
+  <form method="post" action="/llm/providers/save" id="llm-form">
+    <div class="card" style="margin-bottom: 16px;">
+      <strong>Modifica profilo</strong><br>
+      <div style="margin-top: 8px;">
+        {% if selected_profile_name %}
+          Stai modificando: <code>{{ selected_profile_name }}</code>
+          {% if selected.is_active %}
+            <span class="badge ok">ATTIVO</span>
+          {% endif %}
+          {% if selected.is_legacy %}
+            <span class="badge warn">LEGACY</span>
+          {% endif %}
+        {% else %}
+          Nessun profilo selezionato. Selezionane uno dalla lista o crea un nuovo profilo.
+        {% endif %}
+      </div>
+      <div class="muted" style="margin-top: 6px;">
+        Il salvataggio aggiorna solo il profilo selezionato e lascia intatti gli altri blocchi <code>LLM</code>.
+      </div>
+      {% if selected_profile_name %}
+        <div class="status-grid" style="margin-top: 12px;">
+          <div class="status-item">
+            <span class="muted">Nome profilo</span>
+            <div style="margin-top: 6px;"><strong>{{ selected.profile_name|default("n/d") }}</strong></div>
+          </div>
+          <div class="status-item">
+            <span class="muted">Provider ID</span>
+            <div style="margin-top: 6px;"><strong>{{ selected.provider_id|default("n/d") }}</strong></div>
+          </div>
+        </div>
+        {% if selected.is_legacy and selected.legacy_note %}
+          <div class="flash flash-warn" style="margin-top: 12px;">{{ selected.legacy_note }}</div>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    <input type="hidden" name="profile_name" value="{{ selected_profile_name }}">
+
+    <div class="form-grid">
+      <div>
+        <label for="provider_id">Provider</label>
+        <select id="provider_id" name="provider_id">
+          {% for provider_name in presets.keys() %}
+            <option value="{{ provider_name }}" {% if selected_provider_id == provider_name %}selected{% endif %}>
+              {{ provider_name|capitalize }}
+            </option>
+          {% endfor %}
+          {% if selected_provider_id and selected_provider_id not in presets %}
+            <option value="{{ selected_provider_id }}" selected>{{ selected_provider_id }}</option>
+          {% endif %}
+        </select>
+        <div class="muted" style="margin-top: 6px;">
+          Il preset aiuta a proporre model, base URL e temperature coerenti, ma il profilo resta personalizzabile.
+        </div>
+      </div>
+
+      <div>
+        <label for="model_preset">Model preset</label>
+        <select id="model_preset">
+          <option value="">-- scegli preset --</option>
+        </select>
+        <div class="muted" style="margin-top: 6px;">
+          Opzionale: seleziona un model suggerito dal provider senza perdere la possibilita di usare un valore custom.
+        </div>
+      </div>
+
+      <div class="full">
+        <label for="model">Model</label>
+        <input type="text" id="model" name="model" value="{{ selected.model }}" required autocomplete="off">
+      </div>
+
+      <div class="full">
+        <label for="base_url">Base URL</label>
+        <input type="text" id="base_url" name="base_url" value="{{ selected.base_url }}" required autocomplete="off">
+      </div>
+
+      <div class="full">
+        <label for="api_key">API Key</label>
+        <input
+          type="password"
+          id="api_key"
+          name="api_key"
+          value=""
+          placeholder="Lascia vuoto per mantenere la chiave attuale"
+        >
+        <div class="muted" style="margin-top: 6px;">
+          {% if selected.has_api_key %}
+            <span id="api-key-status-text">API key gia configurata. Non viene mostrata. Lascia vuoto per mantenere quella esistente.</span>
+          {% else %}
+            <span id="api-key-status-text">Nessuna API key salvata per questo profilo.</span>
+          {% endif %}
+        </div>
+        {% set show_api_key_warning = selected.requires_api_key and not selected.has_api_key %}
+        <div
+          id="api-key-warning"
+          class="flash flash-warn"
+          style="margin-top: 10px; {% if not show_api_key_warning %}display: none;{% endif %}"
+        >
+            Questo provider richiede una API key. Salvataggio bloccato finché non la inserisci.
+        </div>
+      </div>
+
+      <div>
+        <label for="temperature">Temperature</label>
+        <input type="number" id="temperature" name="temperature" value="{{ selected.temperature }}" step="0.1" min="0" max="2">
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="submit" {% if not selected_profile_name %}disabled{% endif %}>Salva profilo</button>
+      {% if selected_profile_name and not selected.is_active %}
+        <button type="submit" formaction="/llm/providers/switch" formmethod="post">
+          Rendi attivo
+        </button>
+      {% endif %}
+      {% if selected_profile_name %}
+        <a class="button-link" href="/llm?profile={{ selected_profile_name }}">Ricarica profilo</a>
+      {% endif %}
+      <a class="button-link" href="/logs?source=xserver&lines=200">Vedi log Xiaozhi</a>
+    </div>
+    <div class="muted" style="margin-top: 10px;">
+      Il pulsante <strong>Rendi attivo</strong> aggiorna solo <code>runtime.llm_profile</code> e, se presente, <code>selected_module.llm</code>.
+    </div>
+  </form>
+
+  <div class="flash" style="margin-top: 16px;">
+    <div><strong>Note:</strong></div>
+    <div>Questa pagina implementa il multi-provider reale di Livello 1: piu profili coexistono, uno resta attivo alla volta.</div>
+    <div>Routing automatico e fallback intelligente restano fuori da questa patch.</div>
+  </div>
+</section>
+
+<script>
+  const presets = {{ presets|tojson }};
+  const providerInput = document.getElementById("provider_id");
+  const modelPresetInput = document.getElementById("model_preset");
+  const modelInput = document.getElementById("model");
+  const baseUrlInput = document.getElementById("base_url");
+  const temperatureInput = document.getElementById("temperature");
+  const apiKeyInput = document.getElementById("api_key");
+  const apiKeyStatusText = document.getElementById("api-key-status-text");
+  const apiKeyWarning = document.getElementById("api-key-warning");
+  const initialHasApiKey = {{ 1 if selected.has_api_key else 0 }};
+  const initialModelValue = modelInput ? modelInput.value : "";
+  const initialBaseUrlValue = baseUrlInput ? baseUrlInput.value : "";
+  const initialTemperatureValue = temperatureInput ? temperatureInput.value : "";
+
+  function getPreset(provider) {
+    return presets[provider] || null;
+  }
+
+  function fillModelPresetOptions(provider, currentModel = "") {
+    if (!modelPresetInput) return;
+
+    const preset = getPreset(provider);
+    modelPresetInput.innerHTML = '<option value="">-- scegli preset --</option>';
+    modelPresetInput.disabled = true;
+
+    if (!preset || !Array.isArray(preset.models) || preset.models.length === 0) return;
+
+    for (const modelName of preset.models) {
+      const opt = document.createElement("option");
+      opt.value = modelName;
+      opt.textContent = modelName;
+      if (currentModel && currentModel === modelName) {
+        opt.selected = true;
+      }
+      modelPresetInput.appendChild(opt);
+    }
+
+    modelPresetInput.disabled = false;
+  }
+
+  function providerRequiresApiKey(provider) {
+    return ["groq", "openai", "anthropic"].includes(provider);
+  }
+
+  function refreshApiKeyState(provider) {
+    if (!apiKeyStatusText || !apiKeyWarning) return;
+
+    const requiresApiKey = providerRequiresApiKey(provider);
+    const hasTypedApiKey = Boolean(apiKeyInput && apiKeyInput.value.trim());
+
+    if (initialHasApiKey) {
+      apiKeyStatusText.textContent = "API key gia configurata. Non viene mostrata. Lascia vuoto per mantenere quella esistente.";
+      apiKeyWarning.style.display = "none";
+      return;
+    }
+
+    apiKeyStatusText.textContent = requiresApiKey
+      ? "Nessuna API key salvata per questo profilo. Inseriscila per completare il salvataggio."
+      : "Nessuna API key salvata per questo profilo.";
+
+    apiKeyWarning.style.display = requiresApiKey && !hasTypedApiKey ? "" : "none";
+  }
+
+  function applyProviderPreset(provider, options = {}) {
+    if (!providerInput || !modelInput || !baseUrlInput || !temperatureInput) return;
+
+    const preset = getPreset(provider);
+    const shouldPreserveModel = Boolean(options.preserveModel);
+    const shouldPreserveBaseUrl = Boolean(options.preserveBaseUrl);
+    const shouldPreserveTemperature = Boolean(options.preserveTemperature);
+    const currentModel = modelInput.value;
+    const currentBaseUrl = baseUrlInput.value;
+    const currentTemperature = temperatureInput.value;
+
+    fillModelPresetOptions(provider, currentModel);
+
+    if (!preset) return;
+
+    if (!shouldPreserveModel || !currentModel) {
+      modelInput.value = preset.default_model || "";
+    }
+    if (!shouldPreserveBaseUrl || !currentBaseUrl) {
+      baseUrlInput.value = preset.base_url || "";
+    }
+    if (!shouldPreserveTemperature || !currentTemperature) {
+      temperatureInput.value = preset.default_temperature ?? currentTemperature ?? 0.7;
+    }
+
+    fillModelPresetOptions(provider, modelInput.value);
+  }
+
+  if (providerInput) {
+    providerInput.addEventListener("change", function () {
+      applyProviderPreset(providerInput.value);
+      refreshApiKeyState(providerInput.value);
+    });
+  }
+
+  if (modelPresetInput) {
+    modelPresetInput.addEventListener("change", function () {
+      if (modelPresetInput.value && modelInput) {
+        modelInput.value = modelPresetInput.value;
+      }
+    });
+  }
+
+  if (apiKeyInput) {
+    apiKeyInput.addEventListener("input", function () {
+      refreshApiKeyState(providerInput ? providerInput.value : "");
+    });
+  }
+
+  applyProviderPreset(providerInput ? providerInput.value : "", {
+    preserveModel: Boolean(initialModelValue),
+    preserveBaseUrl: Boolean(initialBaseUrlValue),
+    preserveTemperature: Boolean(initialTemperatureValue),
+  });
+  refreshApiKeyState(providerInput ? providerInput.value : "");
+</script>
+{% endblock %}

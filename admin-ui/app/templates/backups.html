@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="card">
+  <h2>Config Backups</h2>
+
+  {% if result %}
+    <div class="flash {% if result.ok %}flash-ok{% else %}flash-err{% endif %}">
+      <div>{{ result.message }}</div>
+      {% if result.restored_from %}
+        <div style="margin-top: 6px;">Ripristinato da: <code>{{ result.restored_from }}</code></div>
+      {% endif %}
+      {% if result.pre_restore_backup %}
+        <div style="margin-top: 6px;">Backup pre-restore: <code>{{ result.pre_restore_backup }}</code></div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <div class="actions" style="margin-bottom: 16px; display: flex; gap: 12px; flex-wrap: wrap;">
+    <form method="post" action="/backups/delete-all" onsubmit="return confirm('Eliminare TUTTI i backup?')">
+      <button type="submit">🧹 Elimina tutti i backup</button>
+    </form>
+  </div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Filename</th>
+        <th>Azioni</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for b in backups %}
+      {% set backup_name = b.name if b is mapping else b %}
+      <tr>
+        <td>
+          <code>{{ backup_name }}</code>
+          {% if b is mapping %}
+            <div class="muted" style="margin-top: 6px;">
+              {{ b.mtime }} · {{ b.sha256_short }}
+            </div>
+          {% endif %}
+        </td>
+        <td style="display:flex; gap:8px; flex-wrap:wrap;">
+          <form method="post" action="/backups/restore" style="display:inline;" onsubmit="return confirm('Ripristinare questo backup?')">
+            <input type="hidden" name="filename" value="{{ backup_name }}">
+            <button type="submit">♻️ Restore</button>
+          </form>
+
+          <form method="post" action="/backups/delete" style="display:inline;" onsubmit="return confirm('Eliminare questo backup?')">
+            <input type="hidden" name="filename" value="{{ backup_name }}">
+            <button type="submit">🗑 Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="2">Nessun backup trovato</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

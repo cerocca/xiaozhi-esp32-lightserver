@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="card">
+  <div style="margin-bottom: 12px;">
+    <a class="back-link" href="/ai">&larr; Torna a AI Stack</a>
+  </div>
+  <h2>TTS</h2>
+
+  {% set active = active|default({}) %}
+  {% set selected = selected|default({}) %}
+  {% set profiles = profiles|default([]) %}
+  {% set presets = presets|default({}) %}
+  {% set selected_profile_name = selected.profile_name or "" %}
+
+  <div class="card" style="margin-bottom: 16px;">
+    <strong>Stato attuale</strong>
+    <div class="status-grid" style="margin-top: 12px;">
+      <div class="status-item">
+        <span class="muted">Profilo attivo</span>
+        <div style="margin-top: 6px;">
+          <strong>{{ active.profile_name or "nessun profilo disponibile" }}</strong>
+          {% if active.profile_name %}
+            <span class="badge ok">ATTIVO</span>
+          {% endif %}
+          {% if active.is_local_piper %}
+            <span class="badge info">PIPER LOCALE</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="status-item">
+        <span class="muted">Model attivo</span>
+        <div style="margin-top: 6px;"><strong>{{ active.model or "n/d" }}</strong></div>
+      </div>
+      <div class="status-item">
+        <span class="muted">Voice attiva</span>
+        <div style="margin-top: 6px;"><strong>{{ active.voice or "n/d" }}</strong></div>
+      </div>
+      <div class="status-item">
+        <span class="muted">Endpoint attivo</span>
+        <div style="margin-top: 6px;"><code>{{ active.endpoint or "n/d" }}</code></div>
+      </div>
+      <div class="status-item">
+        <span class="muted">runtime.tts_profile</span>
+        <div style="margin-top: 6px;"><strong>{{ runtime_tts_profile or "non impostato" }}</strong></div>
+      </div>
+      <div class="status-item">
+        <span class="muted">selected_module.tts</span>
+        <div style="margin-top: 6px;"><strong>{{ legacy_selected_module_name or "non impostato" }}</strong></div>
+      </div>
+      <div class="status-item">
+        <span class="muted">selected_module.TTS</span>
+        <div style="margin-top: 6px;"><strong>{{ logical_selected_module_name or "non impostato" }}</strong></div>
+      </div>
+    </div>
+  </div>
+
+  {% if result %}
+    <div class="flash {% if result.ok %}flash-ok{% else %}flash-err{% endif %}">
+      <div><strong>{% if result.ok %}Operazione completata{% else %}Operazione non riuscita{% endif %}</strong></div>
+      {% if result.message %}
+        <div style="margin-top: 6px;">{{ result.message }}</div>
+      {% endif %}
+      {% if result.backup_path %}
+        <div style="margin-top: 8px;">Backup salvato in: <code>{{ result.backup_path }}</code></div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <div class="card" style="margin-bottom: 16px;">
+    <strong>Profili TTS</strong>
+    <div class="muted" style="margin-top: 6px;">
+      Ogni profilo corrisponde a una chiave sotto <code>TTS</code>. Il salvataggio aggiorna solo il profilo selezionato.
+    </div>
+
+    {% if profiles %}
+      <div style="margin-top: 12px;">
+        {% for profile in profiles %}
+          <div class="card profile-card {% if profile.is_active %}profile-card-active{% endif %} {% if selected_profile_name == profile.profile_name %}profile-card-selected{% endif %}" style="margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap;">
+              <div>
+                <div>
+                  <strong>{{ profile.profile_name }}</strong>
+                  {% if profile.is_active %}
+                    <span class="badge ok">ATTIVO</span>
+                  {% endif %}
+                  {% if selected_profile_name == profile.profile_name %}
+                    <span class="badge info">IN MODIFICA</span>
+                  {% endif %}
+                  {% if profile.is_local_piper %}
+                    <span class="badge info">PIPER LOCALE</span>
+                  {% endif %}
+                </div>
+                <div class="muted" style="margin-top: 6px;">Type: {{ profile.type or "n/d" }}</div>
+                <div class="muted" style="margin-top: 4px;">Model: {{ profile.model or "n/d" }}</div>
+                <div class="muted" style="margin-top: 4px;">Voice: {{ profile.voice or "n/d" }}</div>
+                <div class="muted" style="margin-top: 4px;">Endpoint: <code title="{{ profile.endpoint or 'n/d' }}">{{ (profile.endpoint or "n/d")|truncate(54, True) }}</code></div>
+                <div class="muted" style="margin-top: 4px;">Speed: {{ profile.speed if profile.speed != "" else "n/d" }}</div>
+                {% if profile.output_dir %}
+                  <div class="muted" style="margin-top: 4px;">output_dir: <code>{{ profile.output_dir }}</code></div>
+                {% endif %}
+              </div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a class="button-link" href="/tts?profile={{ profile.profile_name }}">Modifica</a>
+                {% if not profile.is_active %}
+                  <form method="post" action="/tts/profiles/switch" style="margin: 0;">
+                    <input type="hidden" name="profile_name" value="{{ profile.profile_name }}">
+                    <button type="submit">Rendi attivo</button>
+                  </form>
+                  <form method="post" action="/tts/profiles/delete" style="margin: 0;" onsubmit="return confirm('Eliminare il profilo {{ profile.profile_name }}?');">
+                    <input type="hidden" name="profile_name" value="{{ profile.profile_name }}">
+                    <input type="hidden" name="selected_profile_name" value="{{ selected_profile_name }}">
+                    <button type="submit">Elimina</button>
+                  </form>
+                {% else %}
+                  <button type="button" disabled title="Profilo attivo non eliminabile">Elimina (attivo)</button>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="flash" style="margin-top: 12px;">
+        Nessun profilo TTS trovato nella configurazione. Puoi crearne uno dal form qui sotto.
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="card" style="margin-bottom: 16px;">
+    <strong>Crea nuovo profilo</strong>
+    <form method="post" action="/tts/profiles/create" style="margin-top: 12px;">
+      <div class="form-grid">
+        <div>
+          <label for="create_provider_id">Preset/provider</label>
+          <select id="create_provider_id" name="provider_id">
+            {% for provider_name, preset in presets.items() %}
+              <option value="{{ provider_name }}">{{ preset.label or provider_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="create_profile_name">Nome profilo</label>
+          <input type="text" id="create_profile_name" name="profile_name" value="" placeholder="Es. piper_sala" autocomplete="off">
+          <div class="muted" style="margin-top: 6px;">
+            Se lasci vuoto, viene usato il nome del preset con suffisso progressivo se serve.
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button type="submit">Crea profilo</button>
+      </div>
+    </form>
+  </div>
+
+  <form method="post" action="/tts/profiles/save">
+    <div class="card" style="margin-bottom: 16px;">
+      <strong>Modifica profilo</strong>
+      <div style="margin-top: 8px;">
+        {% if selected_profile_name %}
+          Stai modificando: <code>{{ selected_profile_name }}</code>
+          {% if selected.is_active %}
+            <span class="badge ok">ATTIVO</span>
+          {% endif %}
+          {% if selected.is_local_piper %}
+            <span class="badge info">PIPER LOCALE</span>
+          {% endif %}
+        {% else %}
+          Nessun profilo selezionato. Selezionane uno dalla lista o crea un nuovo profilo.
+        {% endif %}
+      </div>
+      <div class="muted" style="margin-top: 6px;">
+        Se <code>api_key</code> viene lasciata vuota, la chiave già presente nel profilo resta invariata.
+      </div>
+    </div>
+
+    <input type="hidden" name="profile_name" value="{{ selected_profile_name }}">
+
+    <div class="form-grid">
+      <div>
+        <label for="type">Type</label>
+        <input type="text" id="type" name="type" value="{{ selected.type }}" required autocomplete="off">
+      </div>
+      <div class="full">
+        <label for="endpoint">API URL / Base URL</label>
+        <input type="text" id="endpoint" name="endpoint" value="{{ selected.endpoint }}" required autocomplete="off">
+      </div>
+      <div>
+        <label for="model">Model</label>
+        <input type="text" id="model" name="model" value="{{ selected.model }}" required autocomplete="off">
+      </div>
+      <div>
+        <label for="voice">Voice</label>
+        {% if selected.voice_options and selected.voice_options|length > 0 %}
+          <select id="voice" name="voice" required>
+            {% for voice_name in selected.voice_options %}
+              <option value="{{ voice_name }}" {% if selected.voice == voice_name %}selected{% endif %}>{{ voice_name }}</option>
+            {% endfor %}
+          </select>
+          <div class="muted" style="margin-top: 6px;">
+            Lista statica disponibile per il provider corrente.
+          </div>
+        {% else %}
+          <input type="text" id="voice" name="voice" value="{{ selected.voice }}" required autocomplete="off">
+        {% endif %}
+      </div>
+      <div>
+        <label for="speed">Speed</label>
+        <input type="number" id="speed" name="speed" value="{{ selected.speed }}" step="0.1" min="0">
+      </div>
+      <div class="full">
+        <label for="api_key">API Key</label>
+        <input type="password" id="api_key" name="api_key" value="" placeholder="Lascia vuoto per mantenere la chiave attuale">
+        <div class="muted" style="margin-top: 6px;">
+          {% if selected.has_api_key %}
+            API key già configurata. Non viene mostrata.
+          {% elif selected.requires_api_key %}
+            API key richiesta per questo endpoint.
+          {% else %}
+            API key opzionale per questo profilo.
+          {% endif %}
+        </div>
+      </div>
+      <div class="full">
+        <label for="output_dir">output_dir</label>
+        <input type="text" id="output_dir" name="output_dir" value="{{ selected.output_dir }}" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="submit" {% if not selected_profile_name %}disabled{% endif %}>Salva profilo</button>
+      {% if selected_profile_name and not selected.is_active %}
+        <button type="submit" formaction="/tts/profiles/switch" formmethod="post">Rendi attivo</button>
+      {% endif %}
+      {% if selected_profile_name %}
+        <a class="button-link" href="/tts?profile={{ selected_profile_name }}">Ricarica profilo</a>
+      {% endif %}
+    </div>
+  </form>
+</section>
+{% endblock %}

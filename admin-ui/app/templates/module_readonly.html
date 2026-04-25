@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="card">
+  <div style="margin-bottom: 12px;">
+    <a class="back-link" href="/ai">&larr; Torna a AI Stack</a>
+  </div>
+  <h2>{{ module_title }}</h2>
+
+  <div class="card" style="margin-bottom: 16px;">
+    <strong>Stato corrente</strong><br>
+    <div class="status-grid" style="margin-top: 10px;">
+      <div class="status-item">
+        <span class="muted">Modulo selezionato</span>
+        <div style="margin-top: 6px;"><strong>{{ current_module_name or "non impostato" }}</strong></div>
+      </div>
+      <div class="status-item">
+        <span class="muted">Chiave compatibilità</span>
+        <div style="margin-top: 6px;"><code>selected_module.{{ selected_key }}</code></div>
+      </div>
+      <div class="status-item">
+        <span class="muted">Sezione YAML</span>
+        <div style="margin-top: 6px;"><code>{{ section_name }}</code></div>
+      </div>
+    </div>
+    <div class="muted" style="margin-top: 10px;">{{ description }}</div>
+  </div>
+
+  <div class="card" style="margin-bottom: 16px;">
+    <strong>Chiavi rilevanti</strong><br>
+    {% if relevant_keys %}
+      <div class="kv-grid" style="margin-top: 12px;">
+        {% for item in relevant_keys %}
+          <div class="status-item">
+            <span class="muted">{{ item.key }}</span>
+            <div style="margin-top: 6px;">
+              {% if '\n' in item.value %}
+                <pre>{{ item.value }}</pre>
+              {% else %}
+                <code>{{ item.value }}</code>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="flash" style="margin-top: 12px;">
+        Nessun blocco dettagliato trovato per il modulo selezionato.
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <strong>Nota</strong><br>
+    <div style="margin-top: 10px;">
+      Per modificare questo modulo usa <code>config.yaml</code> o il <a href="/config">Config Editor</a>.
+    </div>
+    {% if current_block_yaml %}
+      <div class="muted" style="margin-top: 10px;">Blocco attuale risolto:</div>
+      <pre>{{ current_block_yaml }}</pre>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="grid dashboard-grid">
+  <article class="card dashboard-card">
+    <div class="dashboard-card-head">
+      <h2>Server Xiaozhi</h2>
+      {% if status.xiaozhi.healthy %}
+        <span class="badge ok">OK</span>
+      {% else %}
+        <span class="badge err">ERRORE</span>
+      {% endif %}
+    </div>
+    <p class="dashboard-card-summary">{{ status.xiaozhi.summary }}</p>
+    <pre class="dashboard-card-content">{{ status.xiaozhi.details }}</pre>
+
+    <div class="dashboard-card-actions">
+      <form method="post" action="/actions/xserver/restart"
+            onsubmit="return confirm('Riavviare il server Xiaozhi?');">
+        <button type="submit">Restart Xiaozhi</button>
+      </form>
+      <div class="actions dashboard-card-actions-row">
+        <form method="post" action="/actions/stop-xiaozhi" style="margin: 0;">
+          <button type="submit" class="button-danger"
+                  onclick="return confirm('Fermare il server Xiaozhi?');">Stop Xiaozhi Server</button>
+        </form>
+        <a class="button-link" href="/logs?source=xserver&lines=200">Vedi log</a>
+      </div>
+    </div>
+  </article>
+
+  <article class="card dashboard-card">
+    <div class="dashboard-card-head">
+      <h2>Piper API</h2>
+      {% if status.piper.healthy %}
+        <span class="badge ok">OK</span>
+      {% else %}
+        <span class="badge err">ERRORE</span>
+      {% endif %}
+    </div>
+    <p class="dashboard-card-summary">{{ status.piper.summary }}</p>
+    <pre class="dashboard-card-content">{{ status.piper.details }}</pre>
+
+    <div class="dashboard-card-actions">
+      <form method="post" action="/actions/piper/restart"
+            onsubmit="return confirm('Riavviare Piper API?');">
+        <button type="submit">Restart Piper</button>
+      </form>
+      <div class="actions dashboard-card-actions-row">
+        <form method="post" action="/actions/stop-piper" style="margin: 0;">
+          <button type="submit" class="button-danger"
+                  onclick="return confirm('Fermare Piper?');">Stop Piper</button>
+        </form>
+        <a class="button-link" href="/logs?source=piper&lines=200">Vedi log</a>
+      </div>
+    </div>
+  </article>
+
+  <article class="card dashboard-card">
+    <div class="dashboard-card-head">
+      <h2>Config runtime</h2>
+      {% if status.config.healthy %}
+        <span class="badge ok">OK</span>
+      {% else %}
+        <span class="badge err">ERRORE</span>
+      {% endif %}
+    </div>
+    <p class="dashboard-card-summary">{{ status.config.summary }}</p>
+    <pre class="dashboard-card-content">{{ status.config.details }}</pre>
+
+    <div class="actions dashboard-card-actions">
+      <a class="button-link" href="/config">Apri config</a>
+      <a class="button-link" href="/backups">Apri backups</a>
+    </div>
+  </article>
+</section>
+{% endblock %}

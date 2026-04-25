@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if refresh and refresh > 0 %}
+  <meta http-equiv="refresh" content="{{ refresh }}">
+{% endif %}
+
+<section class="card">
+  <h2>Logs</h2>
+
+  <form method="get" action="/logs" class="inline-form">
+    <label for="source">Sorgente</label>
+    <select name="source" id="source">
+      <option value="xserver" {% if source == "xserver" %}selected{% endif %}>Xiaozhi server</option>
+      <option value="piper" {% if source == "piper" %}selected{% endif %}>Piper</option>
+    </select>
+
+    <label for="lines">Righe</label>
+    <input type="number" id="lines" name="lines" value="{{ lines }}" min="20" max="1000" step="20">
+
+    <label for="refresh">Refresh</label>
+    <select name="refresh" id="refresh">
+      <option value="0" {% if refresh == 0 %}selected{% endif %}>Off</option>
+      <option value="5" {% if refresh == 5 %}selected{% endif %}>5s</option>
+      <option value="10" {% if refresh == 10 %}selected{% endif %}>10s</option>
+      <option value="30" {% if refresh == 30 %}selected{% endif %}>30s</option>
+    </select>
+
+    <button type="submit">Aggiorna</button>
+  </form>
+
+  <div class="actions">
+    <a class="button-link" href="/logs?source={{ source }}&lines=100&refresh={{ refresh }}">100 righe</a>
+    <a class="button-link" href="/logs?source={{ source }}&lines=200&refresh={{ refresh }}">200 righe</a>
+    <a class="button-link" href="/logs?source={{ source }}&lines=500&refresh={{ refresh }}">500 righe</a>
+    <a class="button-link" href="/logs?source={{ source }}&lines={{ lines }}&refresh={{ refresh }}">Refresh</a>
+  </div>
+
+  <p><strong>Sorgente attiva:</strong> {{ source_label }}</p>
+  <p><strong>Ultime righe:</strong> {{ lines }}</p>
+  <p><strong>Auto-refresh:</strong> {% if refresh > 0 %}{{ refresh }}s{% else %}Off{% endif %}</p>
+
+  {% if result.ok %}
+    <pre>{{ result.stdout }}</pre>
+  {% else %}
+    <div class="flash flash-err">
+      Errore nel recupero log
+    </div>
+    {% if result.stderr %}
+      <pre>{{ result.stderr }}</pre>
+    {% endif %}
+  {% endif %}
+</section>
+{% endblock %}

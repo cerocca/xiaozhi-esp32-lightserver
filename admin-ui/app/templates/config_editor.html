@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="card">
+  <h2>Editor .config.yaml</h2>
+
+  <p>
+    <strong>Validazione attuale:</strong>
+    {% if valid %}
+      <span class="badge ok">OK</span>
+    {% else %}
+      <span class="badge err">ERRORE</span>
+    {% endif %}
+  </p>
+
+  <pre>{{ validation_message }}</pre>
+
+  {% if result %}
+    <div class="flash {% if result.ok %}flash-ok{% else %}flash-err{% endif %}">
+      {{ result.message }}
+      {% if result.backup_path %}
+        <div>Backup: {{ result.backup_path }}</div>
+      {% endif %}
+      {% if result.sha256 %}
+        <div>SHA256: {{ result.sha256 }}</div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <form method="post" action="/config/save">
+    <textarea name="content" class="editor">{{ content }}</textarea>
+    <div class="actions">
+      <button type="submit">Salva config</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

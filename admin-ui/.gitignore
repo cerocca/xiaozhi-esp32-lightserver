@@ -1,0 +1,28 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Env / secrets
+.env
+*.env
+
+# Logs
+*.log
+
+# Backup runtime (NON versionare backup reali)
+data/backups/config/*
+!data/backups/config/.gitkeep
+
+# OS / temp accidental
+.DS_Store
+._*
+*.tmp
+*~
+*.swp
+*.swo
+
+#file miei di progetto
+ARCHITECTURE.md
+PROJECT_RULES.md
+docs_local/

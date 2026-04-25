@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="card">
+  <h2>AI Stack</h2>
+  <div class="muted ai-stack-intro">
+    Accesso rapido ai moduli AI, con distinzione tra quelli gestiti direttamente da UI e quelli consultabili solo in lettura.
+  </div>
+  {% if health_message %}
+    <div class="muted" style="margin-top: 8px;">{{ health_message }}</div>
+  {% endif %}
+</section>
+
+<section class="card ai-stack-section ai-stack-section-managed">
+  <div class="section-head">
+    <div>
+      <h3 class="section-title">Gestione da UI</h3>
+      <div class="muted">Moduli con pagina dedicata e gestione attiva direttamente dalla Admin UI.</div>
+    </div>
+  </div>
+
+  <div class="grid ai-stack-grid">
+    {% for item in ui_items %}
+      <article class="card ai-stack-card">
+        <div class="ai-stack-card-head">
+          <h3 class="section-title">{{ item.title }}</h3>
+          <div class="ai-stack-badge-group">
+            <span class="ai-stack-label">Config</span>
+            <div class="ai-stack-badges">
+            {% for badge in item.config_badges %}
+              <span class="badge {% if badge.label == 'LOCALE' %}local{% elif badge.label == 'REMOTO' %}info{% elif badge.label == 'READ-ONLY' %}readonly{% else %}{{ badge.kind }}{% endif %}">{{ badge.label }}</span>
+            {% endfor %}
+            </div>
+          </div>
+        </div>
+        <p class="muted ai-stack-description">{{ item.description }}</p>
+        <div class="ai-stack-summary">
+          <span class="muted">Attivo:</span>
+          <code>{{ item.active_profile or "non disponibile" }}</code>
+        </div>
+        <div class="ai-stack-runtime">
+          <span class="ai-stack-label">Runtime</span>
+          <span class="badge {{ item.runtime_badge.kind }}">{{ item.runtime_badge.label }}</span>
+        </div>
+        {% if item.runtime_detail %}
+          <div class="muted" style="margin-top: 6px;">{{ item.runtime_detail }}</div>
+        {% endif %}
+        <div class="actions ai-stack-card-actions">
+          <a class="button-link" href="{{ item.href }}">Apri {{ item.title }}</a>
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="card ai-stack-section">
+  <div class="section-head">
+    <div>
+      <h3 class="section-title">Device Runtime</h3>
+      <div class="muted">Stato reale della connessione device riportato da <code>/api/health</code>.</div>
+    </div>
+  </div>
+
+  <article class="card ai-stack-card ai-stack-device-card">
+    <div class="ai-stack-card-head">
+      <h3 class="section-title">{{ device_item.title }}</h3>
+      <div class="ai-stack-runtime">
+        <span class="ai-stack-label">Runtime</span>
+        <span class="badge {{ device_item.runtime_badge.kind }}">{{ device_item.runtime_badge.label }}</span>
+      </div>
+    </div>
+    <p class="muted ai-stack-description">{{ device_item.description }}</p>
+    {% if device_item.runtime_detail %}
+      <div class="muted" style="margin-top: 6px;">{{ device_item.runtime_detail }}</div>
+    {% endif %}
+  </article>
+</section>
+
+<section class="card ai-stack-section ai-stack-section-readonly">
+  <div class="section-head">
+    <div>
+      <h3 class="section-title">Configurazione Avanzata / Sola Lettura</h3>
+      <div class="muted">Moduli visibili in pagina ma modificabili tramite <code>config.yaml</code> o Config Editor.</div>
+    </div>
+  </div>
+
+  <div class="grid ai-stack-grid">
+    {% for item in readonly_items %}
+      <article class="card ai-stack-card ai-stack-card-readonly">
+        <div class="ai-stack-card-head">
+          <h3 class="section-title">{{ item.title }}</h3>
+          <div class="ai-stack-badges">
+            {% for badge in item.badges %}
+              <span class="badge {% if badge.label == 'LOCALE' %}local{% elif badge.label == 'REMOTO' %}info{% elif badge.label == 'READ-ONLY' %}readonly{% else %}{{ badge.kind }}{% endif %}">{{ badge.label }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        <p class="muted ai-stack-description">{{ item.description }}</p>
+        <div class="actions ai-stack-card-actions">
+          <a class="button-link" href="{{ item.href }}">Apri {{ item.title }}</a>
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

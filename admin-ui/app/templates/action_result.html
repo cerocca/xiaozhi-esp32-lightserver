@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="card">
+  <h2>{{ title }}</h2>
+
+  <p>
+    <strong>Esito:</strong>
+    {% if result.ok %}
+      <span class="badge ok">OK</span>
+    {% else %}
+      <span class="badge err">ERRORE</span>
+    {% endif %}
+  </p>
+
+  <p><strong>Return code:</strong> {{ result.returncode }}</p>
+
+  {% if result.stdout %}
+    <h3>Output</h3>
+    <pre>{{ result.stdout }}</pre>
+  {% endif %}
+
+  {% if result.stderr %}
+    <h3>Errori</h3>
+    <pre>{{ result.stderr }}</pre>
+  {% endif %}
+
+  <div class="actions">
+    <a class="button-link" href="/">Torna alla dashboard</a>
+    <a class="button-link" href="/logs">Vai ai log</a>
+  </div>
+</section>
+{% endblock %}

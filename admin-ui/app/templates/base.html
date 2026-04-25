@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ page_title or "Xiaozhi Admin UI" }}</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+</head>
+<body>
+  {% set current_path = request.url.path if request and request.url and request.url.path else "" %}
+  {% set ai_stack_paths = ["/ai", "/llm", "/asr", "/tts", "/vad", "/intent", "/memory"] %}
+  <header class="topbar">
+    <div class="wrap">
+      <h1>Xiaozhi Admin UI</h1>
+      <div class="subtitle">Solo LAN · Sibilla · ESP32/Xiaozhi</div>
+      <nav class="nav">
+        <a href="/" class="{% if current_path == '/' %}active{% endif %}">Dashboard</a>
+        <a href="/config" class="{% if current_path.startswith('/config') %}active{% endif %}">Config</a>
+        <a href="/backups" class="{% if current_path.startswith('/backups') %}active{% endif %}">Backups</a>
+        <a href="/logs" class="{% if current_path.startswith('/logs') %}active{% endif %}">Logs</a>
+        <a href="/devices" class="{% if current_path.startswith('/devices') %}active{% endif %}">Devices</a>
+        <a href="/ai" class="{% if current_path in ai_stack_paths or current_path.startswith('/ai/') %}active{% endif %}">AI Stack</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="app-footer">
+    <div class="wrap app-footer-inner">
+      <span>Admin UI v{{ request.app.version }}</span>
+      <a href="{{ request.app.state.repo_url }}" target="_blank" rel="noreferrer">GitHub</a>
+    </div>
+  </footer>
+</body>
+</html>
