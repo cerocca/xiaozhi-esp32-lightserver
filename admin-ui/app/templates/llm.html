@@ -19,26 +19,39 @@
   {% set runtime_profile_name = runtime_llm_profile or "non impostato" %}
   {% set selected_profile_name = selected.profile_name or "" %}
   {% set selected_provider_id = selected.provider_id or "groq" %}
+  {% set runtime_state = health_status.get("llm") if health_status and health_status.health_available else "" %}
 
   <div class="card" style="margin-bottom: 16px;">
     <strong>Stato attuale</strong><br>
     <div class="status-grid" style="margin-top: 10px;">
       <div class="status-item">
-        <span class="muted">Profilo attivo</span>
+        <span class="muted">Profilo runtime attivo</span>
         <div style="margin-top: 6px;">
-          <strong>{{ active_profile_name }}</strong>
-          {% if active.profile_name %}
+          <strong>{{ runtime_profile_name }}</strong>
+          {% if runtime_profile_name and runtime_profile_name != "non impostato" %}
             <span class="badge ok">ATTIVO</span>
           {% endif %}
-          {% if active.is_legacy %}
-            <span class="badge warn">LEGACY</span>
-          {% endif %}
         </div>
-        {% if runtime_profile_name and runtime_profile_name != "non impostato" and runtime_profile_name != active_profile_name %}
+        {% if active_profile_name and active_profile_name != "profilo non disponibile" and active_profile_name != runtime_profile_name %}
           <div class="muted" style="margin-top: 8px;">
-            runtime.llm_profile: <code>{{ runtime_profile_name }}</code>
+            Profilo risolto in pagina: <code>{{ active_profile_name }}</code>
           </div>
         {% endif %}
+      </div>
+      <div class="status-item">
+        <span class="muted">Health runtime</span>
+        <div style="margin-top: 6px;">
+          {% if health_status and health_status.health_available %}
+            <span class="badge {% if runtime_state == 'ok' %}ok{% else %}err{% endif %}">
+              {{ runtime_state|upper if runtime_state else "UNKNOWN" }}
+            </span>
+          {% else %}
+            <span class="badge muted">UNKNOWN</span>
+          {% endif %}
+        </div>
+        <div class="muted" style="margin-top: 8px;">
+          Stato da <code>/api/health</code>: solo contesto operativo, non prova che questo profilo sia gia in uso.
+        </div>
       </div>
       <div class="status-item">
         <span class="muted">Provider attivo</span>
@@ -67,7 +80,7 @@
       </div>
     </div>
     <div class="muted" style="margin-top: 10px;">
-      Lo stato visualizzato distingue il valore grezzo di <code>runtime.llm_profile</code> dal profilo realmente attivo risolto dal backend. La selezione in pagina non cambia il runtime finché non usi <strong>Rendi attivo</strong>.
+      Questa pagina separa tre azioni diverse: <strong>Salva profilo</strong> aggiorna il blocco YAML del profilo selezionato, <strong>Rendi attivo</strong> cambia <code>runtime.llm_profile</code>, e <strong>Restart Xiaozhi</strong> prova ad applicare la nuova configurazione al runtime.
     </div>
     {% if legacy_selected_module_name %}
       <div class="muted" style="margin-top: 6px;">
@@ -90,6 +103,10 @@
       </div>
       {% if result.message %}
         <div style="margin-top: 6px;">{{ result.message }}</div>
+      {% endif %}
+      {% if result.ok %}
+        <div style="margin-top: 8px;">Config salvata su <code>.config.yaml</code>.</div>
+        <div style="margin-top: 6px;">Potrebbe essere necessario riavviare Xiaozhi prima che la modifica si rifletta davvero nel runtime.</div>
       {% endif %}
       {% if result.backup_path %}
         <div style="margin-top: 8px;">Backup salvato in: <code>{{ result.backup_path }}</code></div>
@@ -115,6 +132,19 @@
       {% endif %}
     </div>
   {% endif %}
+
+  <div class="card" style="margin-bottom: 16px;">
+    <strong>Applicazione runtime</strong><br>
+    <div class="muted" style="margin-top: 8px;">
+      1. Salva il profilo se modifichi model, base URL o credenziali. 2. Usa <strong>Rendi attivo</strong> per aggiornare <code>runtime.llm_profile</code>. 3. Se vuoi provare ad applicare la modifica al runtime corrente, usa il restart qui sotto.
+    </div>
+    <div class="actions" style="margin-top: 12px;">
+      <form method="post" action="/actions/xserver/restart" style="margin: 0;" onsubmit="return confirm('Riavviare il server Xiaozhi?');">
+        <button type="submit">Restart Xiaozhi</button>
+      </form>
+      <a class="button-link" href="/logs?source=xserver&lines=200">Vedi log Xiaozhi</a>
+    </div>
+  </div>
 
   <div class="card" style="margin-bottom: 16px;">
     <strong>Profili configurati</strong><br>
@@ -237,7 +267,7 @@
         {% endif %}
       </div>
       <div class="muted" style="margin-top: 6px;">
-        Il salvataggio aggiorna solo il profilo selezionato e lascia intatti gli altri blocchi <code>LLM</code>.
+        Il salvataggio aggiorna solo il profilo selezionato e lascia intatti gli altri blocchi <code>LLM</code>. Non cambia il profilo runtime attivo finche non usi <strong>Rendi attivo</strong>.
       </div>
       {% if selected_profile_name %}
         <div class="status-grid" style="margin-top: 12px;">

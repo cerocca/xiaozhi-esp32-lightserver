@@ -12,17 +12,38 @@
   {% set profiles = profiles|default([]) %}
   {% set presets = presets|default({}) %}
   {% set selected_profile_name = selected.profile_name or "" %}
+  {% set runtime_state = health_status.get("asr") if health_status and health_status.health_available else "" %}
 
   <div class="card" style="margin-bottom: 16px;">
     <strong>Stato attuale</strong>
     <div class="status-grid" style="margin-top: 12px;">
       <div class="status-item">
-        <span class="muted">Profilo attivo</span>
+        <span class="muted">Profilo runtime attivo</span>
         <div style="margin-top: 6px;">
-          <strong>{{ active.profile_name or "nessun profilo disponibile" }}</strong>
-          {% if active.profile_name %}
+          <strong>{{ runtime_asr_profile or "non impostato" }}</strong>
+          {% if runtime_asr_profile %}
             <span class="badge ok">ATTIVO</span>
           {% endif %}
+        </div>
+        {% if active.profile_name and active.profile_name != runtime_asr_profile %}
+          <div class="muted" style="margin-top: 8px;">
+            Profilo risolto in pagina: <code>{{ active.profile_name }}</code>
+          </div>
+        {% endif %}
+      </div>
+      <div class="status-item">
+        <span class="muted">Health runtime</span>
+        <div style="margin-top: 6px;">
+          {% if health_status and health_status.health_available %}
+            <span class="badge {% if runtime_state == 'ok' %}ok{% else %}err{% endif %}">
+              {{ runtime_state|upper if runtime_state else "UNKNOWN" }}
+            </span>
+          {% else %}
+            <span class="badge muted">UNKNOWN</span>
+          {% endif %}
+        </div>
+        <div class="muted" style="margin-top: 8px;">
+          Stato da <code>/api/health</code>: solo contesto operativo, non conferma del profilo esatto in uso.
         </div>
       </div>
       <div class="status-item">
@@ -46,6 +67,9 @@
         <div style="margin-top: 6px;"><strong>{{ logical_selected_module_name or "non impostato" }}</strong></div>
       </div>
     </div>
+    <div class="muted" style="margin-top: 10px;">
+      Questa pagina separa tre azioni diverse: <strong>Salva profilo</strong> aggiorna il blocco YAML del profilo selezionato, <strong>Rendi attivo</strong> cambia <code>runtime.asr_profile</code>, e <strong>Restart Xiaozhi</strong> prova ad applicare la nuova configurazione al runtime.
+    </div>
   </div>
 
   {% if result %}
@@ -54,6 +78,10 @@
       {% if result.message %}
         <div style="margin-top: 6px;">{{ result.message }}</div>
       {% endif %}
+      {% if result.ok %}
+        <div style="margin-top: 8px;">Config salvata su <code>.config.yaml</code>.</div>
+        <div style="margin-top: 6px;">Potrebbe essere necessario riavviare Xiaozhi prima che la modifica si rifletta davvero nel runtime.</div>
+      {% endif %}
       {% if result.backup_path %}
         <div style="margin-top: 8px;">Backup salvato in: <code>{{ result.backup_path }}</code></div>
       {% endif %}
@@ -61,9 +89,22 @@
   {% endif %}
 
   <div class="card" style="margin-bottom: 16px;">
+    <strong>Applicazione runtime</strong>
+    <div class="muted" style="margin-top: 8px;">
+      1. Salva il profilo se modifichi endpoint, model o credenziali. 2. Usa <strong>Rendi attivo</strong> per aggiornare <code>runtime.asr_profile</code>. 3. Se vuoi provare ad applicare la modifica al runtime corrente, usa il restart qui sotto.
+    </div>
+    <div class="actions" style="margin-top: 12px;">
+      <form method="post" action="/actions/xserver/restart" style="margin: 0;" onsubmit="return confirm('Riavviare il server Xiaozhi?');">
+        <button type="submit">Restart Xiaozhi</button>
+      </form>
+      <a class="button-link" href="/logs?source=xserver&lines=200">Vedi log Xiaozhi</a>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom: 16px;">
     <strong>Profili ASR</strong>
     <div class="muted" style="margin-top: 6px;">
-      Ogni profilo corrisponde a una chiave sotto <code>ASR</code>. Il salvataggio aggiorna solo il profilo selezionato.
+      Ogni profilo corrisponde a una chiave sotto <code>ASR</code>. Il salvataggio aggiorna solo il profilo selezionato e non cambia il profilo runtime attivo finche non usi <strong>Rendi attivo</strong>.
     </div>
 
     {% if profiles %}

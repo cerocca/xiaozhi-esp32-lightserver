@@ -5,6 +5,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app.config import TEMPLATES_DIR
+from app.services.health_service import get_health_status
 from app.services.tts_service import (
     create_tts_profile,
     delete_tts_profile,
@@ -30,6 +31,7 @@ def _render_tts_page(request, page_data, result):
         "runtime_tts_profile": safe_page_data.get("runtime_tts_profile", ""),
         "legacy_selected_module_name": safe_page_data.get("legacy_selected_module_name", ""),
         "logical_selected_module_name": safe_page_data.get("logical_selected_module_name", ""),
+        "health_status": get_health_status(),
         "result": result,
     }
     return templates.TemplateResponse(request, "tts.html", context)

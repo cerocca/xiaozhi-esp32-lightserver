@@ -6,6 +6,7 @@ from fastapi.templating import Jinja2Templates
 
 from app.config import TEMPLATES_DIR, settings
 from app.services.command_service import run_command
+from app.services.health_service import get_health_status
 from app.services.llm_service import (
     create_provider_profile,
     delete_provider_profile,
@@ -35,6 +36,7 @@ def _render_llm_page(
         "active": safe_page_data.get("active", {}),
         "runtime_llm_profile": safe_page_data.get("runtime_llm_profile", ""),
         "legacy_selected_module_name": safe_page_data.get("legacy_selected_module_name", ""),
+        "health_status": get_health_status(),
         "result": result,
     }
 

@@ -5,6 +5,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app.config import TEMPLATES_DIR
+from app.services.health_service import get_health_status
 from app.services.asr_service import (
     create_asr_profile,
     delete_asr_profile,
@@ -30,6 +31,7 @@ def _render_asr_page(request, page_data, result):
         "runtime_asr_profile": safe_page_data.get("runtime_asr_profile", ""),
         "legacy_selected_module_name": safe_page_data.get("legacy_selected_module_name", ""),
         "logical_selected_module_name": safe_page_data.get("logical_selected_module_name", ""),
+        "health_status": get_health_status(),
         "result": result,
     }
     return templates.TemplateResponse(request, "asr.html", context)
