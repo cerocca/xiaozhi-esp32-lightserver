@@ -6,6 +6,37 @@ All relevant Admin UI changes are recorded here.
 
 ---
 
+## [0.2.1] - 2026-04-25
+
+### ✨ Added
+- AI Stack page now acts as entry point for Runtime Profiles
+- Display of:
+  - `runtime.llm_profile`
+  - `runtime.asr_profile`
+  - `runtime.tts_profile`
+- Per-module overview (LLM / ASR / TTS):
+  - active profile
+  - available profiles count
+  - runtime health badge
+- Direct navigation actions:
+  - “Manage LLM”
+  - “Manage ASR”
+  - “Manage TTS”
+
+### 🔄 Changed
+- Improved clarity of runtime vs configuration in LLM / ASR / TTS pages
+- Clearer distinction between:
+  - saving a profile
+  - switching active runtime profile
+  - restart requirement for applying changes
+- AI Stack layout reorganized to prioritize runtime visibility
+
+### 🛠 Fixed
+- Prevented template crashes when `health_status` is missing
+- Made health rendering resilient across all module pages (`llm`, `asr`, `tts`)
+
+---
+
 ## [0.1.5]
 
 ### Improvements
