@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from app.config import settings
+from app.config import STATIC_DIR, settings
 from app.routers.actions import router as actions_router
 from app.routers.asr import router as asr_router
 from app.routers.backups import router as backups_router
@@ -16,7 +16,7 @@ from app.routers.tts import router as tts_router
 app = FastAPI(title="Xiaozhi Admin UI", version=settings.admin_ui_version)
 app.state.repo_url = settings.admin_ui_repo_url
 
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 app.include_router(dashboard_router)
 app.include_router(config_router)

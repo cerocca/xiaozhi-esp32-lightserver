@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Query, Request
 from fastapi.templating import Jinja2Templates
 
+from app.config import TEMPLATES_DIR
 from app.services.log_service import get_piper_logs, get_xserver_logs
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
 @router.get("/logs")

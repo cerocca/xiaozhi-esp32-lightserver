@@ -4,6 +4,7 @@ from fastapi import APIRouter, Form, Query, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
+from app.config import TEMPLATES_DIR
 from app.services.tts_service import (
     create_tts_profile,
     delete_tts_profile,
@@ -14,7 +15,7 @@ from app.services.tts_service import (
 
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
 def _render_tts_page(request, page_data, result):

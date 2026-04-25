@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 
+from app.config import TEMPLATES_DIR
 from app.services.asr_service import get_active_asr
 from app.services.health_service import get_health_status
 from app.services.llm_service import get_active_llm
@@ -11,7 +12,7 @@ from app.services.status_service import get_dashboard_status
 from app.services.tts_service import get_active_tts
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
 def _build_ui_badges(slug: str) -> list[dict]:

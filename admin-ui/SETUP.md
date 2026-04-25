@@ -1,6 +1,6 @@
 # SETUP
 
-This guide covers the simplest path to install `xiaozhi-admin-ui` on a Linux server, with explicit configuration and minimal manual steps.
+This guide covers the simplest path to run `xiaozhi-admin-ui` on a Linux server, with explicit configuration and minimal manual steps.
 
 ---
 
@@ -30,10 +30,9 @@ Critical requirement:
 Verify the backend is actually working:
 
 ```bash
-ls -ld /home/xiaozhi/xiaozhi-esp32-lightserver
-ls -l /home/xiaozhi/xiaozhi-esp32-lightserver/data/.config.yaml
-
 cd /home/xiaozhi/xiaozhi-esp32-lightserver
+ls -ld .
+ls -l ./data/.config.yaml
 docker compose ps
 
 curl -s http://127.0.0.1:8003/api/health
@@ -52,10 +51,15 @@ curl -s http://127.0.0.1:8091/health
 
 ## 3. Installation
 
-```bash
-git clone https://github.com/cerocca/xiaozhi-admin-ui.git
-cd xiaozhi-admin-ui
+Recommended monorepo layout:
 
+```bash
+cd /home/xiaozhi/xiaozhi-esp32-lightserver/admin-ui
+```
+
+Then create the virtualenv and install dependencies:
+
+```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -80,11 +84,18 @@ ADMIN_UI_PORT=8088
 BACKEND_HOST=127.0.0.1
 BACKEND_HEALTH_PORT=8003
 
-XIAOZHI_DIR=/home/xiaozhi/xiaozhi-esp32-lightserver
-XIAOZHI_CONFIG=/home/xiaozhi/xiaozhi-esp32-lightserver/data/.config.yaml
+XIAOZHI_DIR=..
+XIAOZHI_CONFIG=../data/.config.yaml
 
 PIPER_SERVICE_NAME=piper-api
 ```
+
+Meaning:
+
+- `XIAOZHI_DIR=..` points to the monorepo root, where `docker-compose.yml` lives
+- `XIAOZHI_CONFIG=../data/.config.yaml` points to the shared backend config
+
+Standalone installs can still override both paths to match their own filesystem layout.
 
 ---
 
@@ -131,7 +142,7 @@ Notes:
 ## 6. Run manually
 
 ```bash
-cd /home/xiaozhi/xiaozhi-admin-ui
+cd /home/xiaozhi/xiaozhi-esp32-lightserver/admin-ui
 source .venv/bin/activate
 
 python -c "import app.main; print('import ok')"
@@ -187,9 +198,9 @@ After=network-online.target
 [Service]
 Type=simple
 User=xiaozhi
-WorkingDirectory=/home/xiaozhi/xiaozhi-admin-ui
-EnvironmentFile=/home/xiaozhi/xiaozhi-admin-ui/.env
-ExecStart=/home/xiaozhi/xiaozhi-admin-ui/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8088
+WorkingDirectory=/home/xiaozhi/xiaozhi-esp32-lightserver/admin-ui
+EnvironmentFile=/home/xiaozhi/xiaozhi-esp32-lightserver/admin-ui/.env
+ExecStart=/home/xiaozhi/xiaozhi-esp32-lightserver/admin-ui/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8088
 Restart=always
 
 [Install]

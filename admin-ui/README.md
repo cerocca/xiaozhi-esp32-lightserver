@@ -11,6 +11,12 @@
 Minimal Admin UI to manage and observe a Xiaozhi ESP32 server in a LAN environment.  
 For full installation and step-by-step guide see [`SETUP.md`](SETUP.md).
 
+This component now also supports the monorepo layout used by `xiaozhi-esp32-lightserver`, where:
+
+- `admin-ui/` contains the UI
+- `../data/.config.yaml` is the backend config
+- `..` is the backend compose/project root
+
 ---
 
 ## What it does
@@ -82,8 +88,7 @@ This ensures a clear distinction between:
 ## Quick start
 
 ```bash
-git clone https://github.com/cerocca/xiaozhi-admin-ui.git
-cd xiaozhi-admin-ui
+cd admin-ui
 
 python3 -m venv .venv
 source .venv/bin/activate
@@ -92,12 +97,14 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Edit at least:
+Default monorepo values:
 
 ```env
-XIAOZHI_DIR=...
-XIAOZHI_CONFIG=...
+XIAOZHI_DIR=..
+XIAOZHI_CONFIG=../data/.config.yaml
 ```
+
+Standalone installs can keep using the same UI, but should override those values to match their own backend checkout.
 
 Run:
 

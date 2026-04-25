@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Form, Request
 from fastapi.templating import Jinja2Templates
 
+from app.config import TEMPLATES_DIR
 from app.services.config_service import (
     get_config_editor_state,
     load_config_editor_state,
@@ -8,7 +9,7 @@ from app.services.config_service import (
 )
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
 @router.get("/config")

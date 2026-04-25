@@ -1,6 +1,18 @@
 #!/usr/bin/env bash
 
-XIAOZHI_DIR="${XIAOZHI_DIR:-/home/ciru/xiaozhi-esp32-lightserver}"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+MONOREPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+LEGACY_SIBLING_ROOT="$SCRIPT_DIR/../../xiaozhi-esp32-lightserver"
+
+if [ -f "$MONOREPO_ROOT/docker-compose.yml" ]; then
+  DEFAULT_XIAOZHI_DIR="$MONOREPO_ROOT"
+elif [ -f "$LEGACY_SIBLING_ROOT/docker-compose.yml" ]; then
+  DEFAULT_XIAOZHI_DIR="$(cd "$LEGACY_SIBLING_ROOT" && pwd)"
+else
+  DEFAULT_XIAOZHI_DIR="$MONOREPO_ROOT"
+fi
+
+XIAOZHI_DIR="${XIAOZHI_DIR:-$DEFAULT_XIAOZHI_DIR}"
 
 case "$1" in
   restart)

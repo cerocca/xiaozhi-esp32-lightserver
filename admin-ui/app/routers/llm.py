@@ -4,7 +4,7 @@ from fastapi import APIRouter, Form, Query, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from app.config import settings
+from app.config import TEMPLATES_DIR, settings
 from app.services.command_service import run_command
 from app.services.llm_service import (
     create_provider_profile,
@@ -17,7 +17,7 @@ from app.services.llm_service import (
 )
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
 def _render_llm_page(

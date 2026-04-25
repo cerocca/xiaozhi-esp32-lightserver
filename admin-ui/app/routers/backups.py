@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 
+from app.config import TEMPLATES_DIR
 from app.services.backup_service import (
     delete_backup,
     delete_all_backups,
@@ -9,7 +10,7 @@ from app.services.backup_service import (
 from app.services.config_service import restore_backup
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
 @router.get("/backups")

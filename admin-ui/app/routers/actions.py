@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 
-from app.config import settings
+from app.config import TEMPLATES_DIR, settings
 from app.services.command_service import run_command
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
 @router.post("/actions/xserver/restart")
