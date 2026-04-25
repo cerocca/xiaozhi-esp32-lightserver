@@ -19,7 +19,14 @@ This repo now presents itself as a small monorepo:
 - `server/` = backend/runtime area
 - `admin-ui/` = companion web UI area
 
-The companion Admin UI was imported as-is in Phase 1 of the monorepo migration. Path/config integration between the backend and Admin UI is intentionally deferred to later phases.
+The companion Admin UI was imported as-is in Phase 1 of the monorepo migration and is now path-aware for the monorepo layout after Phase 3.
+
+Current status:
+
+- server runtime still lives at `server/main/xiaozhi-server/`
+- Admin UI integration is still lightweight
+- Docker image / Compose packaging has not been updated for Admin UI yet
+- final packaging alignment remains a later phase
 
 Licensed under the MIT License.
 
@@ -225,7 +232,7 @@ Expected result:
 
 ```
 .
-├── admin-ui/                  # companion Admin UI, imported as-is in Phase 1
+├── admin-ui/                  # companion Admin UI, imported and path-aware for monorepo use
 ├── data/                      # runtime config (mounted)
 ├── models/                    # optional host-provided local models
 ├── server/                    # backend/runtime area
@@ -240,8 +247,9 @@ Expected result:
 Admin UI integration note:
 
 - `admin-ui/` is now part of this repository
-- it was imported without path/config changes
-- backend/UI integration work will happen in later phases
+- it was imported in Phase 1 and made path-aware in Phase 3
+- server runtime still lives at `server/main/xiaozhi-server/`
+- Docker image / Compose alignment for Admin UI is still pending the final packaging phase
 
 ---
 

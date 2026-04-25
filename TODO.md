@@ -2,9 +2,11 @@
 
 ## Architecture / Repo Direction
 - [ ] Keep the boundary between runtime server and admin tooling clear
-- [ ] Evaluate whether the Admin UI should remain standalone or move into the server repo
-- [ ] Decide monorepo direction after / together with v0.2.0
-- [ ] Review Docker setup: remove dev bind mount and restore production-ready image build
+- [x] Import Admin UI into `admin-ui/` as Phase 1 of the monorepo migration
+- [x] Update root docs to present the repository as a monorepo
+- [x] Make Admin UI path/config handling work from `admin-ui/` inside the monorepo
+- [ ] Align Docker image / Compose packaging as the final monorepo phase
+- [ ] Decide whether `server/main/xiaozhi-server/` should be cleaned up to a shorter server path later
 
 ## Near-Term Backlog
 - [ ] Refine runtime config handling for providers and model profiles

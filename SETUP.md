@@ -94,6 +94,36 @@ Important:
 - HTTP status mapping rules are defined in the health endpoint section below
 - `"device": "disconnected"` is normal when no ESP32 device is currently connected
 
+## 3.1 Companion Admin UI
+
+The repository now also contains the companion Admin UI under [`admin-ui/`](./admin-ui/README.md).
+
+Run it from inside `admin-ui/`:
+
+```bash
+cd <PROJECT_DIR>/admin-ui
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+```
+
+Recommended .env values for the monorepo layout:
+
+```env
+BACKEND_HOST=127.0.0.1
+BACKEND_HEALTH_PORT=8003
+XIAOZHI_DIR=..
+XIAOZHI_CONFIG=../data/.config.yaml
+```
+
+Notes:
+
+* the Admin UI uses `/api/health` as the backend source of truth
+* `XIAOZHI_DIR=..` points to the monorepo root, where `docker-compose.yml` lives
+* `XIAOZHI_CONFIG=../data/.config.yaml` points to the shared backend config
+* detailed Admin UI setup remains in [`admin-ui/SETUP.md`](./admin-ui/SETUP.md)
+
 ## 4. Install the Project
 
 ```bash

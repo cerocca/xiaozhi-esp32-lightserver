@@ -3,6 +3,11 @@
 
 ## [Unreleased]
 
+### Monorepo
+- import companion Admin UI into `admin-ui/`
+- make Admin UI path/config handling work from the monorepo layout
+- update root documentation to describe the current monorepo state
+
 ### Dev
 - enable bind mount of server code in Docker for faster development workflow
 - avoid rebuilding container on every Python change (use docker compose restart instead)
