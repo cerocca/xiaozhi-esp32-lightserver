@@ -5,8 +5,11 @@
 - [x] Import Admin UI into `admin-ui/` as Phase 1 of the monorepo migration
 - [x] Update root docs to present the repository as a monorepo
 - [x] Make Admin UI path/config handling work from `admin-ui/` inside the monorepo
-- [ ] Align Docker image / Compose packaging as the final monorepo phase
-- [ ] Decide whether `server/main/xiaozhi-server/` should be cleaned up to a shorter server path later
+- [ ] Make release/docs navigation clearer across root `README`, `admin-ui/README`, `SETUP`, and release notes
+- [ ] Evaluate deeper Admin UI to runtime integration and control-plane features
+- [ ] Keep `server/main/xiaozhi-server/` path cleanup as optional future work
+- [ ] Keep Admin UI containerization optional future work; default Docker/Compose stays server-only
+- [ ] Archive/supersede the old standalone `xiaozhi-admin-ui` repo after the README update
 
 ## Near-Term Backlog
 - [ ] Refine runtime config handling for providers and model profiles
