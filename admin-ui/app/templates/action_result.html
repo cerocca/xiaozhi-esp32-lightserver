@@ -3,6 +3,8 @@
 {% block content %}
 <section class="card">
   <h2>{{ title }}</h2>
+  {% set health = health_status|default({}) %}
+  {% set health_available = health.health_available if health else False %}
 
   <p>
     <strong>Esito:</strong>
@@ -36,6 +38,60 @@
   {% if result.stderr %}
     <h3>Errori</h3>
     <pre>{{ result.stderr }}</pre>
+  {% endif %}
+
+  {% if health_status is defined %}
+    <div class="card" style="margin-top: 16px;">
+      <strong>{{ health_snapshot_title or "Post-restart health snapshot" }}</strong>
+      {% if health_snapshot_focus %}
+        <div class="muted" style="margin-top: 6px;">{{ health_snapshot_focus }}</div>
+      {% endif %}
+
+      <div class="status-grid" style="margin-top: 12px;">
+        <div class="status-item">
+          <span class="muted">LLM</span>
+          <div style="margin-top: 6px;">
+            <span class="badge {% if health_available and health.llm == 'ok' %}ok{% elif health_available %}err{% else %}muted{% endif %}">
+              {% if health_available %}{{ health.llm|upper if health.llm else "UNKNOWN" }}{% else %}UNKNOWN{% endif %}
+            </span>
+          </div>
+        </div>
+        <div class="status-item">
+          <span class="muted">ASR</span>
+          <div style="margin-top: 6px;">
+            <span class="badge {% if health_available and health.asr == 'ok' %}ok{% elif health_available %}err{% else %}muted{% endif %}">
+              {% if health_available %}{{ health.asr|upper if health.asr else "UNKNOWN" }}{% else %}UNKNOWN{% endif %}
+            </span>
+          </div>
+        </div>
+        <div class="status-item">
+          <span class="muted">TTS</span>
+          <div style="margin-top: 6px;">
+            <span class="badge {% if health_available and health.tts == 'ok' %}ok{% elif health_available %}err{% else %}muted{% endif %}">
+              {% if health_available %}{{ health.tts|upper if health.tts else "UNKNOWN" }}{% else %}UNKNOWN{% endif %}
+            </span>
+          </div>
+        </div>
+        <div class="status-item">
+          <span class="muted">Device</span>
+          <div style="margin-top: 6px;">
+            <span class="badge {% if health_available and health.device == 'connected' %}ok{% elif health_available and health.device == 'disconnected' %}muted{% elif health_available %}err{% else %}muted{% endif %}">
+              {% if health_available %}{{ health.device|upper if health.device else "UNKNOWN" }}{% else %}UNKNOWN{% endif %}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {% if not health_available %}
+        <div class="muted" style="margin-top: 10px;">
+          {{ health.health_message or "Runtime health unavailable" }}
+        </div>
+      {% endif %}
+
+      <div class="muted" style="margin-top: 10px;">
+        Snapshot da <code>/api/health</code>: contesto operativo post-restart, non prova del profilo esatto attivo.
+      </div>
+    </div>
   {% endif %}
 
   <div class="actions">
