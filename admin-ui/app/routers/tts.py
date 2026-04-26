@@ -11,6 +11,7 @@ from app.services.tts_service import (
     delete_tts_profile,
     get_tts_page_data,
     set_active_tts,
+    test_active_tts,
     update_single_tts_profile,
 )
 
@@ -77,14 +78,26 @@ def _build_redirect_url(profile_name="", result=None):
             params["validation_warnings"] = "||".join(
                 str(item or "").strip() for item in validation_warnings if str(item or "").strip()
             )
+        endpoint = str(result.get("endpoint", "") or "").strip()
+        if endpoint:
+            params["endpoint"] = endpoint
+        http_status = str(result.get("http_status", "") or "").strip()
+        if http_status:
+            params["http_status"] = http_status
+        error_reason = str(result.get("error_reason", "") or "").strip()
+        if error_reason:
+            params["error_reason"] = error_reason
+        content_type = str(result.get("content_type", "") or "").strip()
+        if content_type:
+            params["content_type"] = content_type
 
     if not params:
         return "/tts"
     return f"/tts?{urlencode(params)}"
 
 
-def _get_result_from_query(ok, msg, backup_path, action_kind, selected_profile_name, runtime_key, logs_href, logs_label, validation_status, validation_warning_count, validation_warnings):
-    if not any([ok, msg, backup_path, action_kind, selected_profile_name, runtime_key, logs_href, logs_label, validation_status, validation_warning_count, validation_warnings]):
+def _get_result_from_query(ok, msg, backup_path, action_kind, selected_profile_name, runtime_key, logs_href, logs_label, validation_status, validation_warning_count, validation_warnings, endpoint, http_status, error_reason, content_type):
+    if not any([ok, msg, backup_path, action_kind, selected_profile_name, runtime_key, logs_href, logs_label, validation_status, validation_warning_count, validation_warnings, endpoint, http_status, error_reason, content_type]):
         return None
 
     return {
@@ -99,6 +112,10 @@ def _get_result_from_query(ok, msg, backup_path, action_kind, selected_profile_n
         "validation_status": str(validation_status or "").strip(),
         "validation_warning_count": int(str(validation_warning_count or "0").strip() or "0"),
         "validation_warnings": [item for item in str(validation_warnings or "").split("||") if item.strip()],
+        "endpoint": str(endpoint or "").strip(),
+        "http_status": str(http_status or "").strip(),
+        "error_reason": str(error_reason or "").strip(),
+        "content_type": str(content_type or "").strip(),
     }
 
 
@@ -126,6 +143,10 @@ def tts_page(
     validation_status: str = Query(default=""),
     validation_warning_count: str = Query(default=""),
     validation_warnings: str = Query(default=""),
+    endpoint: str = Query(default=""),
+    http_status: str = Query(default=""),
+    error_reason: str = Query(default=""),
+    content_type: str = Query(default=""),
 ):
     page_data = get_tts_page_data(selected_profile_name=profile)
     result = _get_result_from_query(
@@ -140,8 +161,19 @@ def tts_page(
         validation_status,
         validation_warning_count,
         validation_warnings,
+        endpoint,
+        http_status,
+        error_reason,
+        content_type,
     )
     return _render_tts_page(request, page_data, result)
+
+
+@router.post("/tts/test")
+def tts_test(request: Request):
+    result = test_active_tts()
+    redirect_url = _build_redirect_url(result.get("selected_profile_name", ""), result)
+    return RedirectResponse(url=redirect_url, status_code=303)
 
 
 @router.post("/tts/profiles/save")
