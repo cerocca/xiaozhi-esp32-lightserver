@@ -4,6 +4,27 @@ All relevant Admin UI changes are recorded here.
 
 ## [Unreleased]
 
+### 🛠 Fixed
+- Updated Admin UI metadata after monorepo migration
+- Simplified Admin UI header subtitle
+- Made switch feedback more consistent across modules (LLM / ASR / TTS)
+- Reduced ambiguity between configuration saved and runtime state
+
+### ✨ Added
+- Improved post-switch feedback across LLM / ASR / TTS pages:
+  - explicit display of selected runtime profile
+  - clear indication that `.config.yaml` was updated via `runtime.*_profile`
+  - reminder that restart may be required for changes to take effect
+  - clarification that `/api/health` is operational context only
+
+### 🔄 Changed
+- Improved restart feedback pages:
+  - explicit success / error messaging
+  - direct links to relevant logs
+  - quick access to AI Stack
+  - clearer guidance on how to verify runtime state
+
+
 ## [0.2.1] - 2026-04-25
 
 ### ✨ Added
