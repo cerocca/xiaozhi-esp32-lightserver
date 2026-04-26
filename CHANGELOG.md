@@ -4,33 +4,34 @@ All relevant Admin UI changes are recorded here.
 
 ## [Unreleased]
 
-### 🛠 Fixed
-- Updated Admin UI metadata after monorepo migration
-- Simplified Admin UI header subtitle
-- Made switch feedback more consistent across modules (LLM / ASR / TTS)
-- Reduced ambiguity between configuration saved and runtime state
 
-### ✨ Added
-- Improved post-switch feedback across LLM / ASR / TTS pages:
-  - explicit display of selected runtime profile
-  - clear indication that `.config.yaml` was updated via `runtime.*_profile`
-  - reminder that restart may be required for changes to take effect
-  - clarification that `/api/health` is operational context only
-  - Added minimal "Test LLM" action in Admin UI:
-		- executes a real OpenAI-compatible completion using the active runtime profile
-		- shows HTTP status, endpoint, and short reply preview
-		- provides a direct operational check independent from `/api/health`
-  - Added minimal "Test TTS" action in Admin UI:
-       - executes a real OpenAI-compatible speech request using the active runtime profile
-       - shows HTTP status, endpoint, and content-type
-       - does not store or play audio, only validates the request path
+## [0.3.0] - 2026-04-26
 
-### 🔄 Changed
-- Improved restart feedback pages:
-  - explicit success / error messaging
-  - direct links to relevant logs
-  - quick access to AI Stack
-  - clearer guidance on how to verify runtime state
+### Added
+- LLM:
+  - prompt-based test via UI
+  - response preview
+  - uses `runtime.llm_profile`
+- TTS:
+  - custom text input
+  - real TTS test
+  - `/tts/test/audio` endpoint
+  - inline HTML audio player
+- ASR:
+  - audio file upload
+  - real test against `/audio/transcriptions`
+  - transcription preview
+- UI/UX:
+  - more uniform test flow across LLM / TTS / ASR
+  - consistent result block
+  - clearer separation from `/api/health`
+- Admin UI:
+  - runtime test actions for LLM / TTS / ASR
+
+### Notes
+- No runtime or config changes
+- No automatic restart
+- Tests are isolated actions
 
 
 ## [0.2.1] - 2026-04-25
