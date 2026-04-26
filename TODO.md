@@ -3,28 +3,35 @@
 ## 🚧 In corso / prossimi step
 
 ### 🔥 Control plane evolution (priorità alta)
-- [ ] Mostrare chiaramente quando è richiesto un restart dopo cambio profilo
-- [ ] Aggiungere feedback post-switch (UI → runtime):
-  - stato runtime dopo modifica
-  - eventuale errore (auth, endpoint, timeout)
-- [ ] Rendere esplicita la relazione:
-  - config salvata vs runtime effettivo
-- [ ] Valutare auto-refresh health dopo cambio profilo
+
+- [ ] Valutare auto-refresh health dopo switch/restart
+- [ ] Ridurre ulteriormente ambiguità tra:
+  - config salvata
+  - runtime attivo
 
 ---
 
-### 🧠 Runtime / config consistency
-- [ ] Chiarire definitivamente il ruolo di:
-  - `runtime.*_profile` (source of truth)
-  - `selected_module.*` (legacy compatibility)
-- [ ] Ridurre ambiguità nella UI tra config e runtime
+### 🧠 Profile validation
 - [ ] Verificare comportamento in caso di profilo invalido:
   - credenziali mancanti
   - endpoint errato
+- [ ] Validare meglio i profili prima dello switch runtime
+- [ ] Rendere piu esplicita la relazione tra config salvata e runtime effettivo
 
 ---
 
-### 🧹 Technical cleanup (low priority)
+### 🧪 Component test actions
+- [ ] Aggiungere azioni di test mirate per componenti/pagine chiave
+- [ ] Coprire i flussi save / switch / restart con test action essenziali
+- [ ] Verificare casi health/error nelle pagine modulo
+
+---
+
+### 🧹 Runtime / config cleanup
+- [ ] Chiarire definitivamente il ruolo di:
+  - `runtime.*_profile` (source of truth)
+  - `selected_module.*` (legacy compatibility)
+- [ ] Ridurre ambiguita nella UI tra config e runtime
 - [ ] Valutare impatto di `yaml.safe_dump` su:
   - commenti
   - formattazione
@@ -33,18 +40,11 @@
 
 ---
 
-### 📦 DX / Packaging
-- [ ] Documentare chiaramente avvio Admin UI in README/SETUP
-- [ ] Valutare container Docker per admin-ui
-- [ ] Setup “one command” per ambiente dev
-
----
-
-### 🔗 Navigabilità e UX
+### 🔗 Docs / release navigation
 - [ ] Migliorare navigazione tra:
   - README ↔ Admin UI ↔ Setup
-- [ ] Valutare Admin UI come vero “control plane”
-- [ ] Ridurre duplicazioni tra AI Stack e pagine modulo
+- [ ] Rendere piu chiaro il percorso release/changelog per micro-fix docs-only
+- [ ] Ridurre duplicazioni tra README, changelog e note operative
 
 ---
 
