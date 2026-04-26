@@ -20,6 +20,10 @@ All relevant Admin UI changes are recorded here.
 		- executes a real OpenAI-compatible completion using the active runtime profile
 		- shows HTTP status, endpoint, and short reply preview
 		- provides a direct operational check independent from `/api/health`
+  - Added minimal "Test TTS" action in Admin UI:
+       - executes a real OpenAI-compatible speech request using the active runtime profile
+       - shows HTTP status, endpoint, and content-type
+       - does not store or play audio, only validates the request path
 
 ### 🔄 Changed
 - Improved restart feedback pages:

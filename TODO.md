@@ -21,12 +21,9 @@
 ---
 
 ### 🧪 Component test actions
-
-
 - [ ] Aggiungere test action per:
-  - TTS (generate short audio)
   - ASR (basic transcription test)
-- [ ] Migliorare output test LLM:
+- [ ] Migliorare output test:
   - distinguere meglio error types (auth, timeout, http)
 - [ ] Coprire i flussi save / switch / restart con test action essenziali
 - [ ] Verificare casi health/error nelle pagine modulo
