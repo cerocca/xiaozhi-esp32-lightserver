@@ -4,7 +4,7 @@
 <section class="card">
   <h2>AI Stack</h2>
   <div class="muted ai-stack-intro">
-    Accesso rapido ai moduli AI, con distinzione tra quelli gestiti direttamente da UI e quelli consultabili solo in lettura.
+    Quick access to AI modules, with a distinction between those managed directly from the UI and those available as read-only.
   </div>
   {% if health_message %}
     <div class="muted" style="margin-top: 8px;">{{ health_message }}</div>
@@ -15,7 +15,7 @@
   <div class="section-head">
     <div>
       <h3 class="section-title">Runtime Profiles</h3>
-      <div class="muted">Valori attuali risolti dalla configurazione runtime.</div>
+      <div class="muted">Current values resolved from runtime configuration.</div>
     </div>
   </div>
 
@@ -24,7 +24,7 @@
       <div class="status-item">
         <span class="muted">{{ item.label }}</span>
         <div style="margin-top: 8px;">
-          <code>{{ item.value or "non impostato" }}</code>
+          <code>{{ item.value or "not set" }}</code>
         </div>
       </div>
     {% endfor %}
@@ -34,8 +34,8 @@
 <section class="card ai-stack-section ai-stack-section-managed">
   <div class="section-head">
     <div>
-      <h3 class="section-title">Gestione da UI</h3>
-      <div class="muted">Moduli con pagina dedicata e gestione attiva direttamente dalla Admin UI.</div>
+      <h3 class="section-title">Managed in UI</h3>
+      <div class="muted">Modules with a dedicated page and active management directly from the Admin UI.</div>
     </div>
   </div>
 
@@ -51,18 +51,18 @@
         </div>
         <p class="muted ai-stack-description">{{ item.description }}</p>
         <div class="ai-stack-summary">
-          <span class="muted">Profilo attivo</span>
+          <span class="muted">Active profile</span>
           <div style="margin-top: 6px;">
-            <strong>{{ item.active_profile or "non disponibile" }}</strong>
+            <strong>{{ item.active_profile or "not available" }}</strong>
           </div>
         </div>
         <div class="status-grid" style="margin-top: 12px;">
           <div class="status-item">
             <span class="muted">runtime.{{ item.slug }}_profile</span>
-            <div style="margin-top: 6px;"><code>{{ item.runtime_profile or "non impostato" }}</code></div>
+            <div style="margin-top: 6px;"><code>{{ item.runtime_profile or "not set" }}</code></div>
           </div>
           <div class="status-item">
-            <span class="muted">Profili disponibili</span>
+            <span class="muted">Available profiles</span>
             <div style="margin-top: 6px;"><strong>{{ item.available_profiles_count }}</strong></div>
           </div>
         </div>
@@ -89,7 +89,7 @@
   <div class="section-head">
     <div>
       <h3 class="section-title">Device Runtime</h3>
-      <div class="muted">Stato reale della connessione device riportato da <code>/api/health</code>.</div>
+      <div class="muted">Actual device connection state reported by <code>/api/health</code>.</div>
     </div>
   </div>
 
@@ -111,8 +111,8 @@
 <section class="card ai-stack-section ai-stack-section-readonly">
   <div class="section-head">
     <div>
-      <h3 class="section-title">Configurazione Avanzata / Sola Lettura</h3>
-      <div class="muted">Moduli visibili in pagina ma modificabili tramite <code>config.yaml</code> o Config Editor.</div>
+      <h3 class="section-title">Advanced Configuration / Read-Only</h3>
+      <div class="muted">Modules visible on this page but editable through <code>config.yaml</code> or the Config Editor.</div>
     </div>
   </div>
 
@@ -129,7 +129,7 @@
         </div>
         <p class="muted ai-stack-description">{{ item.description }}</p>
         <div class="actions ai-stack-card-actions">
-          <a class="button-link" href="{{ item.href }}">Apri {{ item.title }}</a>
+          <a class="button-link" href="{{ item.href }}">Open {{ item.title }}</a>
         </div>
       </article>
     {% endfor %}

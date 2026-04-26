@@ -7,24 +7,24 @@
   {% set health_available = health.health_available if health else False %}
 
   <p>
-    <strong>Esito:</strong>
+    <strong>Result:</strong>
     {% if result.ok %}
       <span class="badge ok">OK</span>
     {% else %}
-      <span class="badge err">ERRORE</span>
+      <span class="badge err">ERROR</span>
     {% endif %}
   </p>
 
   {% if result.ok %}
     <div class="flash flash-ok">
-      <div><strong>Restart completato</strong></div>
-      <div style="margin-top: 6px;">Il comando di restart è stato eseguito correttamente.</div>
-      <div style="margin-top: 6px;">Per confermare lo stato operativo, controlla i log e AI Stack. Lo stato da <code>/api/health</code> è solo contesto operativo.</div>
+      <div><strong>Restart completed</strong></div>
+      <div style="margin-top: 6px;">The restart command completed successfully.</div>
+      <div style="margin-top: 6px;">To confirm operational state, check logs and AI Stack. Status from <code>/api/health</code> is operational context only.</div>
     </div>
   {% else %}
     <div class="flash flash-err">
-      <div><strong>Restart non completato</strong></div>
-      <div style="margin-top: 6px;">Il comando di restart ha restituito un errore. Controlla l'output qui sotto e i log del servizio.</div>
+      <div><strong>Restart not completed</strong></div>
+      <div style="margin-top: 6px;">The restart command returned an error. Check the output below and the service logs.</div>
     </div>
   {% endif %}
 
@@ -36,7 +36,7 @@
   {% endif %}
 
   {% if result.stderr %}
-    <h3>Errori</h3>
+    <h3>Errors</h3>
     <pre>{{ result.stderr }}</pre>
   {% endif %}
 
@@ -89,20 +89,20 @@
       {% endif %}
 
       <div class="muted" style="margin-top: 10px;">
-        Snapshot da <code>/api/health</code>: contesto operativo post-restart, non prova del profilo esatto attivo.
+        Snapshot from <code>/api/health</code>: post-restart operational context, not proof of the exact active profile.
       </div>
     </div>
   {% endif %}
 
   <div class="actions">
     {% if logs_href %}
-      <a class="button-link" href="{{ logs_href }}">{{ logs_label or "Vai ai log" }}</a>
+      <a class="button-link" href="{{ logs_href }}">{{ logs_label or "View logs" }}</a>
     {% endif %}
     {% if stack_href %}
-      <a class="button-link" href="{{ stack_href }}">{{ stack_label or "Apri AI Stack" }}</a>
+      <a class="button-link" href="{{ stack_href }}">{{ stack_label or "Open AI Stack" }}</a>
     {% endif %}
-    <a class="button-link" href="/">Torna alla dashboard</a>
-    <a class="button-link" href="/logs">Vai ai log</a>
+    <a class="button-link" href="/">Back to dashboard</a>
+    <a class="button-link" href="/logs">View logs</a>
   </div>
 
   {% if health_note %}

@@ -3,7 +3,7 @@
 {% block content %}
 <section class="card">
   <div style="margin-bottom: 12px;">
-    <a class="back-link" href="/ai">&larr; Torna a AI Stack</a>
+    <a class="back-link" href="/ai">&larr; Back to AI Stack</a>
   </div>
   <h2>LLM Configuration</h2>
 
@@ -12,29 +12,29 @@
   {% set profiles = profiles|default([]) %}
   {% set presets = presets|default({}) %}
 
-  {% set active_profile_name = active.profile_name or "profilo non disponibile" %}
-  {% set active_provider_id = active.provider_id or "non disponibile" %}
-  {% set active_model = active.model or "model non disponibile" %}
-  {% set active_base_url = active.base_url or "non disponibile" %}
-  {% set runtime_profile_name = runtime_llm_profile or "non impostato" %}
+  {% set active_profile_name = active.profile_name or "profile not available" %}
+  {% set active_provider_id = active.provider_id or "not available" %}
+  {% set active_model = active.model or "model not available" %}
+  {% set active_base_url = active.base_url or "not available" %}
+  {% set runtime_profile_name = runtime_llm_profile or "not set" %}
   {% set selected_profile_name = selected.profile_name or "" %}
   {% set selected_provider_id = selected.provider_id or "groq" %}
   {% set runtime_state = health_status.get("llm") if health_status and health_status.health_available else "" %}
 
   <div class="card" style="margin-bottom: 16px;">
-    <strong>Stato attuale</strong><br>
+    <strong>Current status</strong><br>
     <div class="status-grid" style="margin-top: 10px;">
       <div class="status-item">
-        <span class="muted">Profilo runtime attivo</span>
+        <span class="muted">Active runtime profile</span>
         <div style="margin-top: 6px;">
           <strong>{{ runtime_profile_name }}</strong>
-          {% if runtime_profile_name and runtime_profile_name != "non impostato" %}
-            <span class="badge ok">ATTIVO</span>
+          {% if runtime_profile_name and runtime_profile_name != "not set" %}
+            <span class="badge ok">ACTIVE</span>
           {% endif %}
         </div>
-        {% if active_profile_name and active_profile_name != "profilo non disponibile" and active_profile_name != runtime_profile_name %}
+        {% if active_profile_name and active_profile_name != "profile not available" and active_profile_name != runtime_profile_name %}
           <div class="muted" style="margin-top: 8px;">
-            Profilo risolto in pagina: <code>{{ active_profile_name }}</code>
+            Profile resolved on this page: <code>{{ active_profile_name }}</code>
           </div>
         {% endif %}
       </div>
@@ -50,19 +50,19 @@
           {% endif %}
         </div>
         <div class="muted" style="margin-top: 8px;">
-          Stato da <code>/api/health</code>: solo contesto operativo, non prova che questo profilo sia gia in uso.
+          Status from <code>/api/health</code>: operational context only, not proof that this profile is already in use.
         </div>
       </div>
       <div class="status-item">
-        <span class="muted">Provider attivo</span>
+        <span class="muted">Active provider</span>
         <div style="margin-top: 6px;"><strong>{{ active_provider_id }}</strong></div>
       </div>
       <div class="status-item">
-        <span class="muted">Model attivo</span>
+        <span class="muted">Active model</span>
         <div style="margin-top: 6px;"><strong>{{ active_model }}</strong></div>
       </div>
       <div class="status-item">
-        <span class="muted">Base URL attivo</span>
+        <span class="muted">Active Base URL</span>
         <div style="margin-top: 6px;"><code>{{ active_base_url }}</code></div>
       </div>
       <div class="status-item">
@@ -80,11 +80,11 @@
       </div>
     </div>
     <div class="muted" style="margin-top: 10px;">
-      Questa pagina separa tre azioni diverse: <strong>Salva profilo</strong> aggiorna il blocco YAML del profilo selezionato, <strong>Rendi attivo</strong> cambia <code>runtime.llm_profile</code>, e <strong>Restart Xiaozhi</strong> prova ad applicare la nuova configurazione al runtime.
+      This page separates three different actions: <strong>Save profile</strong> updates the YAML block for the selected profile, <strong>Activate</strong> changes <code>runtime.llm_profile</code>, and <strong>Restart Xiaozhi</strong> tries to apply the new configuration to the runtime.
     </div>
     {% if legacy_selected_module_name %}
       <div class="muted" style="margin-top: 6px;">
-        Compatibilità legacy: <code>selected_module.llm = {{ legacy_selected_module_name }}</code>
+        Legacy compatibility: <code>selected_module.llm = {{ legacy_selected_module_name }}</code>
       </div>
     {% endif %}
     {% if active.is_legacy and active.legacy_note %}
@@ -98,58 +98,58 @@
     <div class="flash {% if result.ok %}flash-ok{% else %}flash-err{% endif %}">
       <div>
         <strong>
-          {% if result.ok %}Operazione completata{% else %}Operazione non riuscita{% endif %}
+          {% if result.ok %}Operation completed{% else %}Operation failed{% endif %}
         </strong>
       </div>
       {% if result.message %}
         <div style="margin-top: 6px;">{{ result.message }}</div>
       {% endif %}
       {% if result.ok and result.action_kind == "switch" %}
-        <div style="margin-top: 8px;">Profilo selezionato per il runtime: <code>{{ result.selected_profile_name or result.selected_module_name }}</code></div>
-        <div style="margin-top: 6px;">Config salvata su <code>.config.yaml</code> aggiornando <code>{{ result.runtime_key or "runtime.llm_profile" }}</code>.</div>
+        <div style="margin-top: 8px;">Profile selected for runtime: <code>{{ result.selected_profile_name or result.selected_module_name }}</code></div>
+        <div style="margin-top: 6px;">Config saved to <code>.config.yaml</code> by updating <code>{{ result.runtime_key or "runtime.llm_profile" }}</code>.</div>
         {% if result.validation_status == "warning" %}
-          <div style="margin-top: 6px;">Questo profilo ha avvisi di validazione: restart/runtime potrebbero fallire.</div>
+          <div style="margin-top: 6px;">This profile has validation warnings: restart/runtime may fail.</div>
           {% for warning in result.validation_warnings %}
             <div class="muted" style="margin-top: 4px;">- {{ warning }}</div>
           {% endfor %}
         {% else %}
-          <div style="margin-top: 6px;">Nessun avviso statico rilevato per questo profilo.</div>
+          <div style="margin-top: 6px;">No static warnings detected for this profile.</div>
         {% endif %}
-        <div style="margin-top: 6px;">Potrebbe essere necessario un restart Xiaozhi prima che il runtime applichi davvero questo profilo.</div>
-        <div style="margin-top: 6px;">Controlla log e <code>/api/health</code>: la health resta solo contesto operativo e non prova da sola quale profilo LLM sia effettivamente in uso.</div>
+        <div style="margin-top: 6px;">A Xiaozhi restart may be required before the runtime actually applies this profile.</div>
+        <div style="margin-top: 6px;">Check logs and <code>/api/health</code>: health remains operational context only and does not by itself prove which LLM profile is actually in use.</div>
       {% elif result.action_kind == "llm_test" %}
-        <div style="margin-top: 8px;">Profilo testato: <code>{{ result.selected_profile_name or result.selected_module_name or runtime_profile_name }}</code></div>
+        <div style="margin-top: 8px;">Profile tested: <code>{{ result.selected_profile_name or result.selected_module_name or runtime_profile_name }}</code></div>
         {% if result.base_url %}
-          <div style="margin-top: 6px;">Base URL usata: <code>{{ result.base_url }}</code></div>
+          <div style="margin-top: 6px;">Base URL used: <code>{{ result.base_url }}</code></div>
         {% endif %}
         {% if result.test_endpoint %}
-          <div style="margin-top: 6px;">Endpoint testato: <code>{{ result.test_endpoint }}</code></div>
+          <div style="margin-top: 6px;">Endpoint tested: <code>{{ result.test_endpoint }}</code></div>
         {% endif %}
         {% if result.http_status %}
           <div style="margin-top: 6px;">HTTP status: <strong>{{ result.http_status }}</strong></div>
         {% endif %}
         {% if result.validation_status == "warning" %}
-          <div style="margin-top: 6px;">Il profilo attivo ha avvisi di validazione: il test è stato eseguito comunque.</div>
+          <div style="margin-top: 6px;">The active profile has validation warnings: the test was run anyway.</div>
           {% for warning in result.validation_warnings %}
             <div class="muted" style="margin-top: 4px;">- {{ warning }}</div>
           {% endfor %}
         {% endif %}
         {% if result.reply_preview %}
-          <div style="margin-top: 6px;">Risposta breve: <code>{{ result.reply_preview }}</code></div>
+          <div style="margin-top: 6px;">Short response: <code>{{ result.reply_preview }}</code></div>
         {% endif %}
         {% if result.error_reason %}
-          <div style="margin-top: 6px;">Motivo: {{ result.error_reason }}</div>
+          <div style="margin-top: 6px;">Reason: {{ result.error_reason }}</div>
         {% endif %}
-        <div style="margin-top: 6px;">Questo test LLM è separato da <code>/api/health</code> e prova una richiesta completion minima sul profilo runtime attivo.</div>
+        <div style="margin-top: 6px;">This LLM test is separate from <code>/api/health</code> and performs a minimal completion request on the active runtime profile.</div>
       {% elif result.ok %}
-        <div style="margin-top: 8px;">Config salvata su <code>.config.yaml</code>.</div>
-        <div style="margin-top: 6px;">Potrebbe essere necessario riavviare Xiaozhi prima che la modifica si rifletta davvero nel runtime.</div>
+        <div style="margin-top: 8px;">Config saved to <code>.config.yaml</code>.</div>
+        <div style="margin-top: 6px;">A Xiaozhi restart may be required before the change is actually reflected in the runtime.</div>
       {% endif %}
       {% if result.backup_path %}
-        <div style="margin-top: 8px;">Backup salvato in: <code>{{ result.backup_path }}</code></div>
+        <div style="margin-top: 8px;">Backup saved to: <code>{{ result.backup_path }}</code></div>
       {% endif %}
       {% if result.selected_module_name %}
-        <div style="margin-top: 6px;">Profilo interessato: <code>{{ result.selected_module_name }}</code></div>
+        <div style="margin-top: 6px;">Affected profile: <code>{{ result.selected_module_name }}</code></div>
       {% endif %}
       {% if result.active_model %}
         <div style="margin-top: 6px;">Model: <strong>{{ result.active_model }}</strong></div>
@@ -160,7 +160,7 @@
           {% if result.restart_result.ok %}
             <span class="badge ok">OK</span>
           {% else %}
-            <span class="badge err">ERRORE</span>
+            <span class="badge err">ERROR</span>
           {% endif %}
           {% if result.restart_result.message %}
             <div class="muted" style="margin-top: 6px;">{{ result.restart_result.message }}</div>
@@ -169,36 +169,36 @@
       {% endif %}
       {% if result.ok and result.action_kind == "switch" %}
         <div class="actions" style="margin-top: 12px;">
-          <form method="post" action="/actions/xserver/restart" style="margin: 0;" onsubmit="return confirm('Riavviare il server Xiaozhi?');">
+          <form method="post" action="/actions/xserver/restart" style="margin: 0;" onsubmit="return confirm('Restart Xiaozhi server?');">
             <button type="submit">Restart Xiaozhi</button>
           </form>
-          <a class="button-link" href="{{ result.logs_href or '/logs?source=xserver&lines=200' }}">{{ result.logs_label or 'Vedi log Xiaozhi' }}</a>
-          <a class="button-link" href="/ai">Apri AI Stack</a>
+          <a class="button-link" href="{{ result.logs_href or '/logs?source=xserver&lines=200' }}">{{ result.logs_label or 'View Xiaozhi logs' }}</a>
+          <a class="button-link" href="/ai">Open AI Stack</a>
         </div>
       {% endif %}
     </div>
   {% endif %}
 
   <div class="card" style="margin-bottom: 16px;">
-    <strong>Applicazione runtime</strong><br>
+    <strong>Runtime application</strong><br>
     <div class="muted" style="margin-top: 8px;">
-      1. Salva il profilo se modifichi model, base URL o credenziali. 2. Usa <strong>Rendi attivo</strong> per aggiornare <code>runtime.llm_profile</code>. 3. Se vuoi provare ad applicare la modifica al runtime corrente, usa il restart qui sotto.
+      1. Save the profile if you change model, Base URL, or credentials. 2. Use <strong>Activate</strong> to update <code>runtime.llm_profile</code>. 3. If you want to try applying the change to the current runtime, use the restart below.
     </div>
     <div class="actions" style="margin-top: 12px;">
-      <form method="post" action="/actions/xserver/restart" style="margin: 0;" onsubmit="return confirm('Riavviare il server Xiaozhi?');">
+      <form method="post" action="/actions/xserver/restart" style="margin: 0;" onsubmit="return confirm('Restart Xiaozhi server?');">
         <button type="submit">Restart Xiaozhi</button>
       </form>
       <form method="post" action="/llm/test" style="margin: 0;">
         <button type="submit">Test LLM</button>
       </form>
-      <a class="button-link" href="/logs?source=xserver&lines=200">Vedi log Xiaozhi</a>
+      <a class="button-link" href="/logs?source=xserver&lines=200">View Xiaozhi logs</a>
     </div>
   </div>
 
   <div class="card" style="margin-bottom: 16px;">
-    <strong>Profili configurati</strong><br>
+    <strong>Configured profiles</strong><br>
     <div class="muted" style="margin-top: 6px;">
-      Ogni profilo corrisponde a una chiave sotto <code>LLM</code>. Il profilo attivo resta controllato da <code>runtime.llm_profile</code>.
+      Each profile corresponds to a key under <code>LLM</code>. The active profile remains controlled by <code>runtime.llm_profile</code>.
     </div>
 
     {% if profiles %}
@@ -210,29 +210,29 @@
                 <div>
                   <strong>{{ profile.profile_name }}</strong>
                   {% if profile.is_active %}
-                    <span class="badge ok">ATTIVO</span>
+                    <span class="badge ok">ACTIVE</span>
                   {% endif %}
                   <span class="badge {% if profile.validation_status == 'ok' %}ok{% else %}warn{% endif %}">
                     {% if profile.validation_status == 'ok' %}OK{% else %}WARNING{% endif %}
                   </span>
                   {% if selected_profile_name and selected_profile_name == profile.profile_name %}
-                    <span class="badge info">IN MODIFICA</span>
+                    <span class="badge info">EDITING</span>
                   {% endif %}
                   {% if profile.is_legacy %}
                     <span class="badge warn">LEGACY</span>
                   {% endif %}
                   {% if not profile.has_api_key %}
                     <span class="badge {% if profile.requires_api_key %}err{% else %}muted{% endif %}">
-                      {% if profile.requires_api_key %}SENZA API KEY{% else %}API KEY ASSENTE{% endif %}
+                      {% if profile.requires_api_key %}NO API KEY{% else %}API KEY MISSING{% endif %}
                     </span>
                   {% endif %}
                 </div>
                 <div class="muted" style="margin-top: 6px;">Provider: {{ profile.provider_id or "n/d" }}</div>
                 <div class="muted" style="margin-top: 4px;">Model: {{ profile.model or "n/d" }}</div>
                 <div class="muted" style="margin-top: 4px;">Base URL: <code title="{{ profile.base_url or 'n/d' }}">{{ (profile.base_url or "n/d")|truncate(54, True) }}</code></div>
-                <div class="muted" style="margin-top: 4px;">API key: {% if profile.has_api_key %}✔ presente{% else %}✖ mancante{% endif %}</div>
+                <div class="muted" style="margin-top: 4px;">API key: {% if profile.has_api_key %}✔ present{% else %}✖ missing{% endif %}</div>
                 {% if profile.validation_warnings %}
-                  <div class="muted" style="margin-top: 6px;">Avvisi profilo:</div>
+                  <div class="muted" style="margin-top: 6px;">Profile warnings:</div>
                   {% for warning in profile.validation_warnings %}
                     <div class="muted" style="margin-top: 4px;">- {{ warning }}</div>
                   {% endfor %}
@@ -242,24 +242,24 @@
                 {% endif %}
               </div>
               <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <a class="button-link" href="/llm?profile={{ profile.profile_name }}">Modifica</a>
+                <a class="button-link" href="/llm?profile={{ profile.profile_name }}">Edit</a>
                 {% if not profile.is_active %}
                   <form method="post" action="/llm/providers/switch" style="margin: 0;">
                     <input type="hidden" name="profile_name" value="{{ profile.profile_name }}">
-                    <button type="submit">Rendi attivo</button>
+                    <button type="submit">Activate</button>
                   </form>
                   <form
                     method="post"
                     action="/llm/providers/delete"
                     style="margin: 0;"
-                    onsubmit="return confirm('Eliminare il profilo ' + '{{ profile.profile_name }}' + '?');"
+                    onsubmit="return confirm('Delete profile ' + '{{ profile.profile_name }}' + '?');"
                   >
                     <input type="hidden" name="profile_name" value="{{ profile.profile_name }}">
                     <input type="hidden" name="selected_profile_name" value="{{ selected_profile_name }}">
-                    <button type="submit">Elimina</button>
+                    <button type="submit">Delete</button>
                   </form>
                 {% else %}
-                  <button type="button" disabled title="Profilo attivo non eliminabile">Elimina (attivo)</button>
+                  <button type="button" disabled title="Active profile cannot be deleted">Delete (active)</button>
                 {% endif %}
               </div>
             </div>
@@ -268,13 +268,13 @@
       </div>
     {% else %}
       <div class="flash" style="margin-top: 12px;">
-        Nessun profilo LLM trovato nella configurazione. Puoi crearne uno dal form qui sotto.
+        No LLM profiles found in the configuration. You can create one using the form below.
       </div>
     {% endif %}
   </div>
 
   <div class="card" style="margin-bottom: 16px;">
-    <strong>Crea nuovo profilo</strong><br>
+    <strong>Create new profile</strong><br>
     <form method="post" action="/llm/providers/create" style="margin-top: 12px;">
       <div class="form-grid">
         <div>
@@ -287,52 +287,52 @@
         </div>
 
         <div>
-          <label for="create_profile_name">Nome profilo</label>
+          <label for="create_profile_name">Profile name</label>
           <input
             type="text"
             id="create_profile_name"
             name="profile_name"
             value=""
-            placeholder="Es. my_openai_fast"
+            placeholder="E.g. my_openai_fast"
             autocomplete="off"
           >
           <div class="muted" style="margin-top: 6px;">
-            Se lasci vuoto, viene proposto il nome standard del preset con suffisso progressivo se serve.
+            If left empty, the standard preset name is suggested with an incremental suffix if needed.
           </div>
         </div>
       </div>
 
       <div class="actions">
-        <button type="submit">Crea profilo</button>
+        <button type="submit">Create profile</button>
       </div>
     </form>
   </div>
 
   <form method="post" action="/llm/providers/save" id="llm-form">
     <div class="card" style="margin-bottom: 16px;">
-      <strong>Modifica profilo</strong><br>
+      <strong>Edit profile</strong><br>
       <div style="margin-top: 8px;">
         {% if selected_profile_name %}
-          Stai modificando: <code>{{ selected_profile_name }}</code>
+          You are editing: <code>{{ selected_profile_name }}</code>
           {% if selected.is_active %}
-            <span class="badge ok">ATTIVO</span>
+            <span class="badge ok">ACTIVE</span>
           {% endif %}
           {% if selected.is_legacy %}
             <span class="badge warn">LEGACY</span>
           {% endif %}
         {% else %}
-          Nessun profilo selezionato. Selezionane uno dalla lista o crea un nuovo profilo.
+          No profile selected. Select one from the list or create a new profile.
         {% endif %}
       </div>
       <div class="muted" style="margin-top: 6px;">
-        Il salvataggio aggiorna solo il profilo selezionato e lascia intatti gli altri blocchi <code>LLM</code>. Non cambia il profilo runtime attivo finche non usi <strong>Rendi attivo</strong>.
+        Saving updates only the selected profile and leaves the other <code>LLM</code> blocks untouched. It does not change the active runtime profile until you use <strong>Activate</strong>.
       </div>
       <div class="muted" style="margin-top: 6px;">
-        Validazione profilo: <span class="badge {% if selected.validation_status == 'ok' %}ok{% else %}warn{% endif %}">{% if selected.validation_status == 'ok' %}OK{% else %}WARNING{% endif %}</span>
+        Profile validation: <span class="badge {% if selected.validation_status == 'ok' %}ok{% else %}warn{% endif %}">{% if selected.validation_status == 'ok' %}OK{% else %}WARNING{% endif %}</span>
         {% if selected.validation_warning_count %}
-          {{ selected.validation_warning_count }} avvisi statici.
+          {{ selected.validation_warning_count }} static warnings.
         {% else %}
-          nessun avviso statico.
+          no static warnings.
         {% endif %}
       </div>
       {% if selected.validation_warnings %}
@@ -343,7 +343,7 @@
       {% if selected_profile_name %}
         <div class="status-grid" style="margin-top: 12px;">
           <div class="status-item">
-            <span class="muted">Nome profilo</span>
+            <span class="muted">Profile name</span>
             <div style="margin-top: 6px;"><strong>{{ selected.profile_name|default("n/d") }}</strong></div>
           </div>
           <div class="status-item">
@@ -373,7 +373,7 @@
           {% endif %}
         </select>
         <div class="muted" style="margin-top: 6px;">
-          Il preset aiuta a proporre model, base URL e temperature coerenti, ma il profilo resta personalizzabile.
+          The preset helps suggest coherent model, Base URL, and temperature values, but the profile remains customizable.
         </div>
       </div>
 
@@ -383,7 +383,7 @@
           <option value="">-- scegli preset --</option>
         </select>
         <div class="muted" style="margin-top: 6px;">
-          Opzionale: seleziona un model suggerito dal provider senza perdere la possibilita di usare un valore custom.
+          Optional: select a provider-suggested model without losing the ability to use a custom value.
         </div>
       </div>
 
@@ -404,13 +404,13 @@
           id="api_key"
           name="api_key"
           value=""
-          placeholder="Lascia vuoto per mantenere la chiave attuale"
+          placeholder="Leave empty to keep the current key"
         >
         <div class="muted" style="margin-top: 6px;">
           {% if selected.has_api_key %}
-            <span id="api-key-status-text">API key gia configurata. Non viene mostrata. Lascia vuoto per mantenere quella esistente.</span>
+            <span id="api-key-status-text">API key already configured. It is not shown. Leave empty to keep the existing one.</span>
           {% else %}
-            <span id="api-key-status-text">Nessuna API key salvata per questo profilo.</span>
+            <span id="api-key-status-text">No API key saved for this profile.</span>
           {% endif %}
         </div>
         {% set show_api_key_warning = selected.requires_api_key and not selected.has_api_key %}
@@ -419,7 +419,7 @@
           class="flash flash-warn"
           style="margin-top: 10px; {% if not show_api_key_warning %}display: none;{% endif %}"
         >
-            Questo provider richiede una API key. Salvataggio bloccato finché non la inserisci.
+            This provider requires an API key. Saving is blocked until you enter one.
         </div>
       </div>
 
@@ -430,26 +430,26 @@
     </div>
 
     <div class="actions">
-      <button type="submit" {% if not selected_profile_name %}disabled{% endif %}>Salva profilo</button>
+      <button type="submit" {% if not selected_profile_name %}disabled{% endif %}>Save profile</button>
       {% if selected_profile_name and not selected.is_active %}
         <button type="submit" formaction="/llm/providers/switch" formmethod="post">
-          Rendi attivo
+          Activate
         </button>
       {% endif %}
       {% if selected_profile_name %}
-        <a class="button-link" href="/llm?profile={{ selected_profile_name }}">Ricarica profilo</a>
+        <a class="button-link" href="/llm?profile={{ selected_profile_name }}">Reload profile</a>
       {% endif %}
-      <a class="button-link" href="/logs?source=xserver&lines=200">Vedi log Xiaozhi</a>
+      <a class="button-link" href="/logs?source=xserver&lines=200">View Xiaozhi logs</a>
     </div>
     <div class="muted" style="margin-top: 10px;">
-      Il pulsante <strong>Rendi attivo</strong> aggiorna solo <code>runtime.llm_profile</code> e, se presente, <code>selected_module.llm</code>.
+      The <strong>Activate</strong> button updates only <code>runtime.llm_profile</code> and, if present, <code>selected_module.llm</code>.
     </div>
   </form>
 
   <div class="flash" style="margin-top: 16px;">
-    <div><strong>Note:</strong></div>
-    <div>Questa pagina implementa il multi-provider reale di Livello 1: piu profili coexistono, uno resta attivo alla volta.</div>
-    <div>Routing automatico e fallback intelligente restano fuori da questa patch.</div>
+    <div><strong>Notes:</strong></div>
+    <div>This page implements real Level 1 multi-provider support: multiple profiles coexist, and one remains active at a time.</div>
+    <div>Automatic routing and intelligent fallback remain out of scope for this patch.</div>
   </div>
 </section>
 
@@ -476,7 +476,7 @@
     if (!modelPresetInput) return;
 
     const preset = getPreset(provider);
-    modelPresetInput.innerHTML = '<option value="">-- scegli preset --</option>';
+    modelPresetInput.innerHTML = '<option value="">-- choose preset --</option>';
     modelPresetInput.disabled = true;
 
     if (!preset || !Array.isArray(preset.models) || preset.models.length === 0) return;
@@ -505,14 +505,14 @@
     const hasTypedApiKey = Boolean(apiKeyInput && apiKeyInput.value.trim());
 
     if (initialHasApiKey) {
-      apiKeyStatusText.textContent = "API key gia configurata. Non viene mostrata. Lascia vuoto per mantenere quella esistente.";
+      apiKeyStatusText.textContent = "API key already configured. It is not shown. Leave empty to keep the existing one.";
       apiKeyWarning.style.display = "none";
       return;
     }
 
     apiKeyStatusText.textContent = requiresApiKey
-      ? "Nessuna API key salvata per questo profilo. Inseriscila per completare il salvataggio."
-      : "Nessuna API key salvata per questo profilo.";
+      ? "No API key saved for this profile. Enter it to complete the save."
+      : "No API key saved for this profile.";
 
     apiKeyWarning.style.display = requiresApiKey && !hasTypedApiKey ? "" : "none";
   }

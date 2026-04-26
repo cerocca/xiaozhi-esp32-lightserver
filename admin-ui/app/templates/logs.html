@@ -9,13 +9,13 @@
   <h2>Logs</h2>
 
   <form method="get" action="/logs" class="inline-form">
-    <label for="source">Sorgente</label>
+    <label for="source">Source</label>
     <select name="source" id="source">
       <option value="xserver" {% if source == "xserver" %}selected{% endif %}>Xiaozhi server</option>
       <option value="piper" {% if source == "piper" %}selected{% endif %}>Piper</option>
     </select>
 
-    <label for="lines">Righe</label>
+    <label for="lines">Lines</label>
     <input type="number" id="lines" name="lines" value="{{ lines }}" min="20" max="1000" step="20">
 
     <label for="refresh">Refresh</label>
@@ -26,25 +26,25 @@
       <option value="30" {% if refresh == 30 %}selected{% endif %}>30s</option>
     </select>
 
-    <button type="submit">Aggiorna</button>
+    <button type="submit">Refresh</button>
   </form>
 
   <div class="actions">
-    <a class="button-link" href="/logs?source={{ source }}&lines=100&refresh={{ refresh }}">100 righe</a>
-    <a class="button-link" href="/logs?source={{ source }}&lines=200&refresh={{ refresh }}">200 righe</a>
-    <a class="button-link" href="/logs?source={{ source }}&lines=500&refresh={{ refresh }}">500 righe</a>
+    <a class="button-link" href="/logs?source={{ source }}&lines=100&refresh={{ refresh }}">100 lines</a>
+    <a class="button-link" href="/logs?source={{ source }}&lines=200&refresh={{ refresh }}">200 lines</a>
+    <a class="button-link" href="/logs?source={{ source }}&lines=500&refresh={{ refresh }}">500 lines</a>
     <a class="button-link" href="/logs?source={{ source }}&lines={{ lines }}&refresh={{ refresh }}">Refresh</a>
   </div>
 
-  <p><strong>Sorgente attiva:</strong> {{ source_label }}</p>
-  <p><strong>Ultime righe:</strong> {{ lines }}</p>
+  <p><strong>Active source:</strong> {{ source_label }}</p>
+  <p><strong>Latest lines:</strong> {{ lines }}</p>
   <p><strong>Auto-refresh:</strong> {% if refresh > 0 %}{{ refresh }}s{% else %}Off{% endif %}</p>
 
   {% if result.ok %}
     <pre>{{ result.stdout }}</pre>
   {% else %}
     <div class="flash flash-err">
-      Errore nel recupero log
+      Error while retrieving logs
     </div>
     {% if result.stderr %}
       <pre>{{ result.stderr }}</pre>

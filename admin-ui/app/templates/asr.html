@@ -3,7 +3,7 @@
 {% block content %}
 <section class="card">
   <div style="margin-bottom: 12px;">
-    <a class="back-link" href="/ai">&larr; Torna ad AI Stack</a>
+    <a class="back-link" href="/ai">&larr; Back to AI Stack</a>
   </div>
   <h2>ASR</h2>
 
@@ -15,19 +15,19 @@
   {% set runtime_state = health_status.get("asr") if health_status and health_status.health_available else "" %}
 
   <div class="card" style="margin-bottom: 16px;">
-    <strong>Stato attuale</strong>
+    <strong>Current status</strong>
     <div class="status-grid" style="margin-top: 12px;">
       <div class="status-item">
-        <span class="muted">Profilo runtime attivo</span>
+        <span class="muted">Active runtime profile</span>
         <div style="margin-top: 6px;">
-          <strong>{{ runtime_asr_profile or "non impostato" }}</strong>
+          <strong>{{ runtime_asr_profile or "not set" }}</strong>
           {% if runtime_asr_profile %}
-            <span class="badge ok">ATTIVO</span>
+            <span class="badge ok">ACTIVE</span>
           {% endif %}
         </div>
         {% if active.profile_name and active.profile_name != runtime_asr_profile %}
           <div class="muted" style="margin-top: 8px;">
-            Profilo risolto in pagina: <code>{{ active.profile_name }}</code>
+            Profile resolved on this page: <code>{{ active.profile_name }}</code>
           </div>
         {% endif %}
       </div>
@@ -43,90 +43,90 @@
           {% endif %}
         </div>
         <div class="muted" style="margin-top: 8px;">
-          Stato da <code>/api/health</code>: solo contesto operativo, non conferma del profilo esatto in uso.
+          Status from <code>/api/health</code>: operational context only, not confirmation of the exact profile in use.
         </div>
       </div>
       <div class="status-item">
-        <span class="muted">Model attivo</span>
+        <span class="muted">Active model</span>
         <div style="margin-top: 6px;"><strong>{{ active.model or "n/d" }}</strong></div>
       </div>
       <div class="status-item">
-        <span class="muted">Endpoint attivo</span>
+        <span class="muted">Active endpoint</span>
         <div style="margin-top: 6px;"><code>{{ active.endpoint or "n/d" }}</code></div>
       </div>
       <div class="status-item">
         <span class="muted">runtime.asr_profile</span>
-        <div style="margin-top: 6px;"><strong>{{ runtime_asr_profile or "non impostato" }}</strong></div>
+        <div style="margin-top: 6px;"><strong>{{ runtime_asr_profile or "not set" }}</strong></div>
       </div>
       <div class="status-item">
         <span class="muted">selected_module.asr</span>
-        <div style="margin-top: 6px;"><strong>{{ legacy_selected_module_name or "non impostato" }}</strong></div>
+        <div style="margin-top: 6px;"><strong>{{ legacy_selected_module_name or "not set" }}</strong></div>
       </div>
       <div class="status-item">
         <span class="muted">selected_module.ASR</span>
-        <div style="margin-top: 6px;"><strong>{{ logical_selected_module_name or "non impostato" }}</strong></div>
+        <div style="margin-top: 6px;"><strong>{{ logical_selected_module_name or "not set" }}</strong></div>
       </div>
     </div>
     <div class="muted" style="margin-top: 10px;">
-      Questa pagina separa tre azioni diverse: <strong>Salva profilo</strong> aggiorna il blocco YAML del profilo selezionato, <strong>Rendi attivo</strong> cambia <code>runtime.asr_profile</code>, e <strong>Restart Xiaozhi</strong> prova ad applicare la nuova configurazione al runtime.
+      This page separates three different actions: <strong>Save profile</strong> updates the YAML block for the selected profile, <strong>Activate</strong> changes <code>runtime.asr_profile</code>, and <strong>Restart Xiaozhi</strong> tries to apply the new configuration to the runtime.
     </div>
   </div>
 
   {% if result %}
     <div class="flash {% if result.ok %}flash-ok{% else %}flash-err{% endif %}">
-      <div><strong>{% if result.ok %}Operazione completata{% else %}Operazione non riuscita{% endif %}</strong></div>
+      <div><strong>{% if result.ok %}Operation completed{% else %}Operation failed{% endif %}</strong></div>
       {% if result.message %}
         <div style="margin-top: 6px;">{{ result.message }}</div>
       {% endif %}
       {% if result.ok and result.action_kind == "switch" %}
-        <div style="margin-top: 8px;">Profilo selezionato per il runtime: <code>{{ result.selected_profile_name }}</code></div>
-        <div style="margin-top: 6px;">Config salvata su <code>.config.yaml</code> aggiornando <code>{{ result.runtime_key or "runtime.asr_profile" }}</code>.</div>
+        <div style="margin-top: 8px;">Profile selected for runtime: <code>{{ result.selected_profile_name }}</code></div>
+        <div style="margin-top: 6px;">Config saved to <code>.config.yaml</code> by updating <code>{{ result.runtime_key or "runtime.asr_profile" }}</code>.</div>
         {% if result.validation_status == "warning" %}
-          <div style="margin-top: 6px;">Questo profilo ha avvisi di validazione: restart/runtime potrebbero fallire.</div>
+          <div style="margin-top: 6px;">This profile has validation warnings: restart/runtime may fail.</div>
           {% for warning in result.validation_warnings %}
             <div class="muted" style="margin-top: 4px;">- {{ warning }}</div>
           {% endfor %}
         {% else %}
-          <div style="margin-top: 6px;">Nessun avviso statico rilevato per questo profilo.</div>
+          <div style="margin-top: 6px;">No static warnings detected for this profile.</div>
         {% endif %}
-        <div style="margin-top: 6px;">Potrebbe essere necessario un restart Xiaozhi prima che il runtime applichi davvero questo profilo.</div>
-        <div style="margin-top: 6px;">Controlla log e <code>/api/health</code>: la health resta solo contesto operativo e non conferma da sola quale profilo ASR sia effettivamente in uso.</div>
+        <div style="margin-top: 6px;">A Xiaozhi restart may be required before the runtime actually applies this profile.</div>
+        <div style="margin-top: 6px;">Check logs and <code>/api/health</code>: health remains operational context only and does not by itself confirm which ASR profile is actually in use.</div>
       {% elif result.ok %}
-        <div style="margin-top: 8px;">Config salvata su <code>.config.yaml</code>.</div>
-        <div style="margin-top: 6px;">Potrebbe essere necessario riavviare Xiaozhi prima che la modifica si rifletta davvero nel runtime.</div>
+        <div style="margin-top: 8px;">Config saved to <code>.config.yaml</code>.</div>
+        <div style="margin-top: 6px;">A Xiaozhi restart may be required before the change is actually reflected in the runtime.</div>
       {% endif %}
       {% if result.backup_path %}
-        <div style="margin-top: 8px;">Backup salvato in: <code>{{ result.backup_path }}</code></div>
+        <div style="margin-top: 8px;">Backup saved to: <code>{{ result.backup_path }}</code></div>
       {% endif %}
       {% if result.ok and result.action_kind == "switch" %}
         <div class="actions" style="margin-top: 12px;">
-          <form method="post" action="/actions/xserver/restart" style="margin: 0;" onsubmit="return confirm('Riavviare il server Xiaozhi?');">
+          <form method="post" action="/actions/xserver/restart" style="margin: 0;" onsubmit="return confirm('Restart Xiaozhi server?');">
             <button type="submit">Restart Xiaozhi</button>
           </form>
-          <a class="button-link" href="{{ result.logs_href or '/logs?source=xserver&lines=200' }}">{{ result.logs_label or 'Vedi log Xiaozhi' }}</a>
-          <a class="button-link" href="/ai">Apri AI Stack</a>
+          <a class="button-link" href="{{ result.logs_href or '/logs?source=xserver&lines=200' }}">{{ result.logs_label or 'View Xiaozhi logs' }}</a>
+          <a class="button-link" href="/ai">Open AI Stack</a>
         </div>
       {% endif %}
     </div>
   {% endif %}
 
   <div class="card" style="margin-bottom: 16px;">
-    <strong>Applicazione runtime</strong>
+    <strong>Runtime application</strong>
     <div class="muted" style="margin-top: 8px;">
-      1. Salva il profilo se modifichi endpoint, model o credenziali. 2. Usa <strong>Rendi attivo</strong> per aggiornare <code>runtime.asr_profile</code>. 3. Se vuoi provare ad applicare la modifica al runtime corrente, usa il restart qui sotto.
+      1. Save the profile if you change endpoint, model, or credentials. 2. Use <strong>Activate</strong> to update <code>runtime.asr_profile</code>. 3. If you want to try applying the change to the current runtime, use the restart below.
     </div>
     <div class="actions" style="margin-top: 12px;">
-      <form method="post" action="/actions/xserver/restart" style="margin: 0;" onsubmit="return confirm('Riavviare il server Xiaozhi?');">
+      <form method="post" action="/actions/xserver/restart" style="margin: 0;" onsubmit="return confirm('Restart Xiaozhi server?');">
         <button type="submit">Restart Xiaozhi</button>
       </form>
-      <a class="button-link" href="/logs?source=xserver&lines=200">Vedi log Xiaozhi</a>
+      <a class="button-link" href="/logs?source=xserver&lines=200">View Xiaozhi logs</a>
     </div>
   </div>
 
   <div class="card" style="margin-bottom: 16px;">
-    <strong>Profili ASR</strong>
+    <strong>ASR profiles</strong>
     <div class="muted" style="margin-top: 6px;">
-      Ogni profilo corrisponde a una chiave sotto <code>ASR</code>. Il salvataggio aggiorna solo il profilo selezionato e non cambia il profilo runtime attivo finche non usi <strong>Rendi attivo</strong>.
+      Each profile corresponds to a key under <code>ASR</code>. Saving updates only the selected profile and does not change the active runtime profile until you use <strong>Activate</strong>.
     </div>
 
     {% if profiles %}
@@ -138,20 +138,20 @@
                 <div>
                   <strong>{{ profile.profile_name }}</strong>
                   {% if profile.is_active %}
-                    <span class="badge ok">ATTIVO</span>
+                    <span class="badge ok">ACTIVE</span>
                   {% endif %}
                   <span class="badge {% if profile.validation_status == 'ok' %}ok{% else %}warn{% endif %}">
                     {% if profile.validation_status == 'ok' %}OK{% else %}WARNING{% endif %}
                   </span>
                   {% if selected_profile_name == profile.profile_name %}
-                    <span class="badge info">IN MODIFICA</span>
+                    <span class="badge info">EDITING</span>
                   {% endif %}
                 </div>
                 <div class="muted" style="margin-top: 6px;">Type: {{ profile.type or "n/d" }}</div>
                 <div class="muted" style="margin-top: 4px;">Model: {{ profile.model or "n/d" }}</div>
                 <div class="muted" style="margin-top: 4px;">Endpoint: <code title="{{ profile.endpoint or 'n/d' }}">{{ (profile.endpoint or "n/d")|truncate(54, True) }}</code></div>
                 {% if profile.validation_warnings %}
-                  <div class="muted" style="margin-top: 6px;">Avvisi profilo:</div>
+                  <div class="muted" style="margin-top: 6px;">Profile warnings:</div>
                   {% for warning in profile.validation_warnings %}
                     <div class="muted" style="margin-top: 4px;">- {{ warning }}</div>
                   {% endfor %}
@@ -161,19 +161,19 @@
                 {% endif %}
               </div>
               <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <a class="button-link" href="/asr?profile={{ profile.profile_name }}">Modifica</a>
+                <a class="button-link" href="/asr?profile={{ profile.profile_name }}">Edit</a>
                 {% if not profile.is_active %}
                   <form method="post" action="/asr/profiles/switch" style="margin: 0;">
                     <input type="hidden" name="profile_name" value="{{ profile.profile_name }}">
-                    <button type="submit">Rendi attivo</button>
+                    <button type="submit">Activate</button>
                   </form>
-                  <form method="post" action="/asr/profiles/delete" style="margin: 0;" onsubmit="return confirm('Eliminare il profilo {{ profile.profile_name }}?');">
+                  <form method="post" action="/asr/profiles/delete" style="margin: 0;" onsubmit="return confirm('Delete profile {{ profile.profile_name }}?');">
                     <input type="hidden" name="profile_name" value="{{ profile.profile_name }}">
                     <input type="hidden" name="selected_profile_name" value="{{ selected_profile_name }}">
-                    <button type="submit">Elimina</button>
+                    <button type="submit">Delete</button>
                   </form>
                 {% else %}
-                  <button type="button" disabled title="Profilo attivo non eliminabile">Elimina (attivo)</button>
+                  <button type="button" disabled title="Active profile cannot be deleted">Delete (active)</button>
                 {% endif %}
               </div>
             </div>
@@ -182,13 +182,13 @@
       </div>
     {% else %}
       <div class="flash" style="margin-top: 12px;">
-        Nessun profilo ASR trovato nella configurazione. Puoi crearne uno dal form qui sotto.
+        No ASR profiles found in the configuration. You can create one using the form below.
       </div>
     {% endif %}
   </div>
 
   <div class="card" style="margin-bottom: 16px;">
-    <strong>Crea nuovo profilo</strong>
+    <strong>Create new profile</strong>
     <form method="post" action="/asr/profiles/create" style="margin-top: 12px;">
       <div class="form-grid">
         <div>
@@ -200,41 +200,41 @@
           </select>
         </div>
         <div>
-          <label for="create_profile_name">Nome profilo</label>
-          <input type="text" id="create_profile_name" name="profile_name" value="" placeholder="Es. groq_fast" autocomplete="off">
+          <label for="create_profile_name">Profile name</label>
+          <input type="text" id="create_profile_name" name="profile_name" value="" placeholder="E.g. groq_fast" autocomplete="off">
           <div class="muted" style="margin-top: 6px;">
-            Se lasci vuoto, viene usato il nome del preset con suffisso progressivo se serve.
+            If left empty, the preset name is used with an incremental suffix if needed.
           </div>
         </div>
       </div>
       <div class="actions">
-        <button type="submit">Crea profilo</button>
+        <button type="submit">Create profile</button>
       </div>
     </form>
   </div>
 
   <form method="post" action="/asr/profiles/save">
     <div class="card" style="margin-bottom: 16px;">
-      <strong>Modifica profilo</strong>
+      <strong>Edit profile</strong>
       <div style="margin-top: 8px;">
         {% if selected_profile_name %}
-          Stai modificando: <code>{{ selected_profile_name }}</code>
+          You are editing: <code>{{ selected_profile_name }}</code>
           {% if selected.is_active %}
-            <span class="badge ok">ATTIVO</span>
+            <span class="badge ok">ACTIVE</span>
           {% endif %}
         {% else %}
-          Nessun profilo selezionato. Selezionane uno dalla lista o crea un nuovo profilo.
+          No profile selected. Select one from the list or create a new profile.
         {% endif %}
       </div>
       <div class="muted" style="margin-top: 6px;">
-        Se <code>api_key</code> viene lasciata vuota, la chiave già presente nel profilo resta invariata.
+        If <code>api_key</code> is left empty, the key already present in the profile remains unchanged.
       </div>
       <div class="muted" style="margin-top: 6px;">
-        Validazione profilo: <span class="badge {% if selected.validation_status == 'ok' %}ok{% else %}warn{% endif %}">{% if selected.validation_status == 'ok' %}OK{% else %}WARNING{% endif %}</span>
+        Profile validation: <span class="badge {% if selected.validation_status == 'ok' %}ok{% else %}warn{% endif %}">{% if selected.validation_status == 'ok' %}OK{% else %}WARNING{% endif %}</span>
         {% if selected.validation_warning_count %}
-          {{ selected.validation_warning_count }} avvisi statici.
+          {{ selected.validation_warning_count }} static warnings.
         {% else %}
-          nessun avviso statico.
+          no static warnings.
         {% endif %}
       </div>
       {% if selected.validation_warnings %}
@@ -261,14 +261,14 @@
       </div>
       <div class="full">
         <label for="api_key">API Key</label>
-        <input type="password" id="api_key" name="api_key" value="" placeholder="Lascia vuoto per mantenere la chiave attuale">
+        <input type="password" id="api_key" name="api_key" value="" placeholder="Leave empty to keep the current key">
         <div class="muted" style="margin-top: 6px;">
           {% if selected.has_api_key %}
-            API key già configurata. Non viene mostrata.
+            API key already configured. It is not shown.
           {% elif selected.requires_api_key %}
-            API key richiesta per questo endpoint.
+            API key required for this endpoint.
           {% else %}
-            API key opzionale per questo profilo.
+            API key optional for this profile.
           {% endif %}
         </div>
       </div>
@@ -279,12 +279,12 @@
     </div>
 
     <div class="actions">
-      <button type="submit" {% if not selected_profile_name %}disabled{% endif %}>Salva profilo</button>
+      <button type="submit" {% if not selected_profile_name %}disabled{% endif %}>Save profile</button>
       {% if selected_profile_name and not selected.is_active %}
-        <button type="submit" formaction="/asr/profiles/switch" formmethod="post">Rendi attivo</button>
+        <button type="submit" formaction="/asr/profiles/switch" formmethod="post">Activate</button>
       {% endif %}
       {% if selected_profile_name %}
-        <a class="button-link" href="/asr?profile={{ selected_profile_name }}">Ricarica profilo</a>
+        <a class="button-link" href="/asr?profile={{ selected_profile_name }}">Reload profile</a>
       {% endif %}
     </div>
   </form>

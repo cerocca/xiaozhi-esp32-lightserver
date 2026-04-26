@@ -5,11 +5,11 @@
   <h2>Editor .config.yaml</h2>
 
   <p>
-    <strong>Validazione attuale:</strong>
+    <strong>Current validation:</strong>
     {% if valid %}
       <span class="badge ok">OK</span>
     {% else %}
-      <span class="badge err">ERRORE</span>
+      <span class="badge err">ERROR</span>
     {% endif %}
   </p>
 
@@ -30,7 +30,7 @@
   <form method="post" action="/config/save">
     <textarea name="content" class="editor">{{ content }}</textarea>
     <div class="actions">
-      <button type="submit">Salva config</button>
+      <button type="submit">Save config</button>
     </div>
   </form>
 </section>

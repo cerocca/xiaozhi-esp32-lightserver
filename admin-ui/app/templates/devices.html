@@ -5,13 +5,13 @@
   <div class="section-head">
     <div>
       <h2>Devices</h2>
-      <p class="muted">Inventario ricavato dai log recenti del server Xiaozhi</p>
+      <p class="muted">Inventory derived from recent Xiaozhi server logs</p>
     </div>
 
     <form method="get" action="/devices" class="inline-form">
-      <label for="lines">Log analizzati</label>
+      <label for="lines">Logs analyzed</label>
       <input type="number" id="lines" name="lines" value="{{ lines }}" min="200" max="5000" step="100">
-      <button type="submit">Aggiorna</button>
+      <button type="submit">Refresh</button>
     </form>
   </div>
 
@@ -26,8 +26,8 @@
             <th>Version</th>
             <th>Last seen</th>
             <th>Status</th>
-            <th>Evento</th>
-            <th>Dettagli</th>
+            <th>Event</th>
+            <th>Details</th>
           </tr>
         </thead>
         <tbody>
@@ -52,7 +52,7 @@
             <td>{{ d.last_event }}</td>
             <td>
               <details class="device-details">
-                <summary>Apri</summary>
+                <summary>Open</summary>
                 <div class="details-grid">
                   <div class="detail-row">
                     <span class="detail-label">Device ID</span>
@@ -75,7 +75,7 @@
       </table>
     </div>
   {% else %}
-    <p>Nessun device trovato nei log analizzati.</p>
+    <p>No devices found in the analyzed logs.</p>
   {% endif %}
 </section>
 {% endblock %}

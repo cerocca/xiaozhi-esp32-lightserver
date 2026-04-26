@@ -8,17 +8,17 @@
     <div class="flash {% if result.ok %}flash-ok{% else %}flash-err{% endif %}">
       <div>{{ result.message }}</div>
       {% if result.restored_from %}
-        <div style="margin-top: 6px;">Ripristinato da: <code>{{ result.restored_from }}</code></div>
+        <div style="margin-top: 6px;">Restored from: <code>{{ result.restored_from }}</code></div>
       {% endif %}
       {% if result.pre_restore_backup %}
-        <div style="margin-top: 6px;">Backup pre-restore: <code>{{ result.pre_restore_backup }}</code></div>
+        <div style="margin-top: 6px;">Pre-restore backup: <code>{{ result.pre_restore_backup }}</code></div>
       {% endif %}
     </div>
   {% endif %}
 
   <div class="actions" style="margin-bottom: 16px; display: flex; gap: 12px; flex-wrap: wrap;">
-    <form method="post" action="/backups/delete-all" onsubmit="return confirm('Eliminare TUTTI i backup?')">
-      <button type="submit">🧹 Elimina tutti i backup</button>
+    <form method="post" action="/backups/delete-all" onsubmit="return confirm('Delete ALL backups?')">
+      <button type="submit">🧹 Delete all backups</button>
     </form>
   </div>
 
@@ -26,7 +26,7 @@
     <thead>
       <tr>
         <th>Filename</th>
-        <th>Azioni</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -42,12 +42,12 @@
           {% endif %}
         </td>
         <td style="display:flex; gap:8px; flex-wrap:wrap;">
-          <form method="post" action="/backups/restore" style="display:inline;" onsubmit="return confirm('Ripristinare questo backup?')">
+          <form method="post" action="/backups/restore" style="display:inline;" onsubmit="return confirm('Restore this backup?')">
             <input type="hidden" name="filename" value="{{ backup_name }}">
             <button type="submit">♻️ Restore</button>
           </form>
 
-          <form method="post" action="/backups/delete" style="display:inline;" onsubmit="return confirm('Eliminare questo backup?')">
+          <form method="post" action="/backups/delete" style="display:inline;" onsubmit="return confirm('Delete this backup?')">
             <input type="hidden" name="filename" value="{{ backup_name }}">
             <button type="submit">🗑 Delete</button>
           </form>
@@ -55,7 +55,7 @@
       </tr>
       {% else %}
       <tr>
-        <td colspan="2">Nessun backup trovato</td>
+        <td colspan="2">No backups found</td>
       </tr>
       {% endfor %}
     </tbody>
