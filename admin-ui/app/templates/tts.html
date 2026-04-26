@@ -100,6 +100,9 @@
         <div style="margin-top: 6px;">Check logs and <code>/api/health</code>: health remains operational context only and does not by itself confirm which TTS profile is actually in use.</div>
       {% elif result.action_kind == "tts_test" %}
         <div style="margin-top: 8px;">Profile tested: <code>{{ result.selected_profile_name or runtime_tts_profile }}</code></div>
+        {% if result.test_text %}
+          <div style="margin-top: 6px;">Text sent: <code>{{ result.test_text }}</code></div>
+        {% endif %}
         {% if result.endpoint %}
           <div style="margin-top: 6px;">Endpoint tested: <code>{{ result.endpoint }}</code></div>
         {% endif %}
@@ -117,6 +120,11 @@
         {% endif %}
         {% if result.error_reason %}
           <div style="margin-top: 6px;">Reason: {{ result.error_reason }}</div>
+        {% endif %}
+        {% if result.ok and result.audio_href %}
+          <div style="margin-top: 10px;">
+            <audio controls preload="none" src="{{ result.audio_href }}"></audio>
+          </div>
         {% endif %}
         <div style="margin-top: 6px;">This TTS test is separate from <code>/api/health</code> and performs a minimal synthesis request on the active runtime profile.</div>
       {% elif result.ok %}
@@ -153,11 +161,25 @@
       <form method="post" action="/actions/piper/restart" style="margin: 0;" onsubmit="return confirm('Restart Piper API?');">
         <button type="submit">Restart Piper</button>
       </form>
-      <form method="post" action="/tts/test" style="margin: 0;">
-        <button type="submit">Test TTS</button>
-      </form>
       <a class="button-link" href="/logs?source=piper&lines=200">View Piper logs</a>
     </div>
+    <form method="post" action="/tts/test" style="margin-top: 12px;">
+      <label for="tts_test_text">Test text</label>
+      <div class="actions" style="margin-top: 8px;">
+        <input
+          type="text"
+          id="tts_test_text"
+          name="test_text"
+          value="{% if result and result.action_kind == 'tts_test' and result.test_text %}{{ result.test_text }}{% else %}Test audio{% endif %}"
+          maxlength="240"
+          autocomplete="off"
+        >
+        <button type="submit">Test TTS</button>
+      </div>
+      <div class="muted" style="margin-top: 6px;">
+        Sends a short synthesis request using the active runtime TTS profile.
+      </div>
+    </form>
   </div>
 
   <div class="card" style="margin-bottom: 16px;">

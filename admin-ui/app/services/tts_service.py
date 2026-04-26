@@ -231,6 +231,13 @@ def _sanitize_tts_test_error(message: str) -> str:
     return sanitized[:240]
 
 
+def _normalize_tts_test_text(value: str) -> str:
+    text = str(value or "").replace("\r", " ").replace("\n", " ").strip()
+    while "  " in text:
+        text = text.replace("  ", " ")
+    return text[:240]
+
+
 def _sanitize_endpoint_for_display(endpoint: str) -> str:
     raw = str(endpoint or "").strip()
     if not raw:
@@ -250,13 +257,42 @@ def _sanitize_endpoint_for_display(endpoint: str) -> str:
     return f"{scheme}://{netloc}{path}"[:160]
 
 
-def test_active_tts():
+def _build_tts_test_headers(api_key: str) -> dict:
+    headers = {
+        "Content-Type": "application/json",
+    }
+    if api_key and not _api_key_is_intentionally_not_needed(api_key):
+        headers["Authorization"] = f"Bearer {api_key}"
+    return headers
+
+
+def _prepare_active_tts_request(input_text: str) -> dict:
     active = get_active_tts()
     profile_name = str(active.get("profile_name", "") or "").strip()
     endpoint = _build_tts_test_endpoint(active.get("endpoint", ""))
-    model = str(active.get("model", "") or "").strip()
-    voice = str(active.get("voice", "") or "").strip()
     api_key = str(active.get("api_key", "") or "").strip()
+    normalized_text = _normalize_tts_test_text(input_text) or "Test audio"
+
+    return {
+        "active": active,
+        "profile_name": profile_name,
+        "endpoint": endpoint,
+        "display_endpoint": _sanitize_endpoint_for_display(endpoint),
+        "headers": _build_tts_test_headers(api_key),
+        "payload": {
+            "model": str(active.get("model", "") or "").strip(),
+            "voice": str(active.get("voice", "") or "").strip(),
+            "input": normalized_text,
+        },
+        "test_text": normalized_text,
+    }
+
+
+def test_active_tts(input_text: str = "Test audio"):
+    request_data = _prepare_active_tts_request(input_text)
+    active = request_data["active"]
+    profile_name = request_data["profile_name"]
+    endpoint = request_data["endpoint"]
     validation_status = active.get("validation_status", "ok")
     validation_warnings = active.get("validation_warnings", [])
     validation_warning_count = active.get("validation_warning_count", 0)
@@ -264,41 +300,30 @@ def test_active_tts():
     result = {
         "action_kind": "tts_test",
         "selected_profile_name": profile_name,
-        "endpoint": _sanitize_endpoint_for_display(endpoint),
+        "endpoint": request_data["display_endpoint"],
         "validation_status": validation_status,
         "validation_warnings": validation_warnings,
         "validation_warning_count": validation_warning_count,
+        "test_text": request_data["test_text"],
         "logs_href": "/logs?source=piper&lines=200",
-        "logs_label": "Vedi log Piper",
+        "logs_label": "View Piper logs",
     }
 
     if not profile_name:
         result["ok"] = False
-        result["message"] = "Nessun profilo TTS attivo da testare"
-        result["error_reason"] = "runtime.tts_profile non risolto"
+        result["message"] = "No active TTS profile to test"
+        result["error_reason"] = "runtime.tts_profile not resolved"
         return result
 
     if not endpoint:
         result["ok"] = False
-        result["message"] = f"Test TTS non eseguito: {profile_name}"
-        result["error_reason"] = "Endpoint audio/speech non disponibile"
+        result["message"] = f"TTS test not run: {profile_name}"
+        result["error_reason"] = "audio/speech endpoint unavailable"
         return result
-
-    headers = {
-        "Content-Type": "application/json",
-    }
-    if api_key and not _api_key_is_intentionally_not_needed(api_key):
-        headers["Authorization"] = f"Bearer {api_key}"
-
-    payload = {
-        "model": model,
-        "voice": voice,
-        "input": "Test audio",
-    }
 
     try:
         with httpx.Client(timeout=8.0) as client:
-            response = client.post(endpoint, headers=headers, json=payload)
+            response = client.post(endpoint, headers=request_data["headers"], json=request_data["payload"])
         result["http_status"] = response.status_code
         content_type = str(response.headers.get("content-type", "") or "").strip()
         if content_type:
@@ -306,11 +331,11 @@ def test_active_tts():
 
         if response.is_success:
             result["ok"] = True
-            result["message"] = f"Test TTS completato: {profile_name}"
+            result["message"] = f"TTS test completed: {profile_name}"
             return result
 
         result["ok"] = False
-        result["message"] = f"Test TTS fallito: {profile_name}"
+        result["message"] = f"TTS test failed: {profile_name}"
 
         error_reason = ""
         try:
@@ -332,9 +357,62 @@ def test_active_tts():
         return result
     except Exception as exc:
         result["ok"] = False
-        result["message"] = f"Test TTS fallito: {profile_name}"
+        result["message"] = f"TTS test failed: {profile_name}"
         result["error_reason"] = _sanitize_tts_test_error(str(exc))
         return result
+
+
+def render_active_tts_audio(input_text: str) -> dict:
+    request_data = _prepare_active_tts_request(input_text)
+    profile_name = request_data["profile_name"]
+    endpoint = request_data["endpoint"]
+
+    if not profile_name:
+        return {"ok": False, "status_code": 400, "error_reason": "runtime.tts_profile not resolved"}
+
+    if not endpoint:
+        return {"ok": False, "status_code": 400, "error_reason": "audio/speech endpoint unavailable"}
+
+    try:
+        with httpx.Client(timeout=8.0) as client:
+            response = client.post(endpoint, headers=request_data["headers"], json=request_data["payload"])
+
+        if response.is_success:
+            content_type = str(response.headers.get("content-type", "") or "").strip()
+            return {
+                "ok": True,
+                "status_code": response.status_code,
+                "content_type": content_type.split(";")[0].strip() if content_type else "audio/mpeg",
+                "content": response.content,
+            }
+
+        error_reason = ""
+        try:
+            data = response.json()
+        except ValueError:
+            data = {}
+
+        if isinstance(data, dict):
+            error = data.get("error")
+            if isinstance(error, dict):
+                error_reason = str(error.get("message", "") or "").strip()
+            elif error:
+                error_reason = str(error).strip()
+
+        if not error_reason:
+            error_reason = f"HTTP {response.status_code}"
+
+        return {
+            "ok": False,
+            "status_code": response.status_code,
+            "error_reason": _sanitize_tts_test_error(error_reason),
+        }
+    except Exception as exc:
+        return {
+            "ok": False,
+            "status_code": 502,
+            "error_reason": _sanitize_tts_test_error(str(exc)),
+        }
 
 
 def _resolve_active_profile_name(data):

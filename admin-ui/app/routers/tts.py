@@ -1,7 +1,7 @@
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Form, Query, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from app.config import TEMPLATES_DIR
@@ -10,6 +10,7 @@ from app.services.tts_service import (
     create_tts_profile,
     delete_tts_profile,
     get_tts_page_data,
+    render_active_tts_audio,
     set_active_tts,
     test_active_tts,
     update_single_tts_profile,
@@ -90,14 +91,20 @@ def _build_redirect_url(profile_name="", result=None):
         content_type = str(result.get("content_type", "") or "").strip()
         if content_type:
             params["content_type"] = content_type
+        test_text = str(result.get("test_text", "") or "").strip()
+        if test_text:
+            params["test_text"] = test_text
+        audio_href = str(result.get("audio_href", "") or "").strip()
+        if audio_href:
+            params["audio_href"] = audio_href
 
     if not params:
         return "/tts"
     return f"/tts?{urlencode(params)}"
 
 
-def _get_result_from_query(ok, msg, backup_path, action_kind, selected_profile_name, runtime_key, logs_href, logs_label, validation_status, validation_warning_count, validation_warnings, endpoint, http_status, error_reason, content_type):
-    if not any([ok, msg, backup_path, action_kind, selected_profile_name, runtime_key, logs_href, logs_label, validation_status, validation_warning_count, validation_warnings, endpoint, http_status, error_reason, content_type]):
+def _get_result_from_query(ok, msg, backup_path, action_kind, selected_profile_name, runtime_key, logs_href, logs_label, validation_status, validation_warning_count, validation_warnings, endpoint, http_status, error_reason, content_type, test_text, audio_href):
+    if not any([ok, msg, backup_path, action_kind, selected_profile_name, runtime_key, logs_href, logs_label, validation_status, validation_warning_count, validation_warnings, endpoint, http_status, error_reason, content_type, test_text, audio_href]):
         return None
 
     return {
@@ -116,6 +123,8 @@ def _get_result_from_query(ok, msg, backup_path, action_kind, selected_profile_n
         "http_status": str(http_status or "").strip(),
         "error_reason": str(error_reason or "").strip(),
         "content_type": str(content_type or "").strip(),
+        "test_text": str(test_text or "").strip(),
+        "audio_href": str(audio_href or "").strip(),
     }
 
 
@@ -147,6 +156,8 @@ def tts_page(
     http_status: str = Query(default=""),
     error_reason: str = Query(default=""),
     content_type: str = Query(default=""),
+    test_text: str = Query(default=""),
+    audio_href: str = Query(default=""),
 ):
     page_data = get_tts_page_data(selected_profile_name=profile)
     result = _get_result_from_query(
@@ -165,15 +176,36 @@ def tts_page(
         http_status,
         error_reason,
         content_type,
+        test_text,
+        audio_href,
     )
     return _render_tts_page(request, page_data, result)
 
 
 @router.post("/tts/test")
-def tts_test(request: Request):
-    result = test_active_tts()
+def tts_test(request: Request, test_text: str = Form(default="Test audio")):
+    result = test_active_tts(test_text)
+    if result.get("ok"):
+        result["audio_href"] = f"/tts/test/audio?{urlencode({'text': result.get('test_text', test_text)})}"
     redirect_url = _build_redirect_url(result.get("selected_profile_name", ""), result)
     return RedirectResponse(url=redirect_url, status_code=303)
+
+
+@router.get("/tts/test/audio")
+def tts_test_audio(text: str = Query(default="Test audio")):
+    audio_result = render_active_tts_audio(text)
+    if not audio_result.get("ok"):
+        return Response(
+            content=audio_result.get("error_reason", "TTS audio test failed"),
+            status_code=int(audio_result.get("status_code", 502) or 502),
+            media_type="text/plain",
+        )
+
+    return Response(
+        content=audio_result.get("content", b""),
+        status_code=int(audio_result.get("status_code", 200) or 200),
+        media_type=audio_result.get("content_type", "audio/mpeg"),
+    )
 
 
 @router.post("/tts/profiles/save")
