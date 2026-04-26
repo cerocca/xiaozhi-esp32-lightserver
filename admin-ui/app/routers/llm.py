@@ -112,6 +112,9 @@ def _build_redirect_url(
         reply_preview = str(result.get("reply_preview", "") or "").strip()
         if reply_preview:
             params["reply_preview"] = reply_preview
+        prompt_text = str(result.get("prompt_text", "") or "").strip()
+        if prompt_text:
+            params["prompt_text"] = prompt_text
 
     if not params:
         return "/llm"
@@ -138,6 +141,7 @@ def _get_result_from_query(
     http_status: str,
     error_reason: str,
     reply_preview: str,
+    prompt_text: str,
 ):
     has_flash = any(
         [
@@ -159,6 +163,7 @@ def _get_result_from_query(
             http_status,
             error_reason,
             reply_preview,
+            prompt_text,
         ]
     )
     if not has_flash:
@@ -184,6 +189,7 @@ def _get_result_from_query(
         "http_status": str(http_status or "").strip(),
         "error_reason": str(error_reason or "").strip(),
         "reply_preview": str(reply_preview or "").strip(),
+        "prompt_text": str(prompt_text or "").strip(),
     }
 
 
@@ -263,6 +269,7 @@ def llm_page(
     http_status: str = Query(default=""),
     error_reason: str = Query(default=""),
     reply_preview: str = Query(default=""),
+    prompt_text: str = Query(default=""),
 ):
     page_data = get_llm_page_data(selected_profile_name=profile)
     result = _get_result_from_query(
@@ -284,13 +291,14 @@ def llm_page(
         http_status,
         error_reason,
         reply_preview,
+        prompt_text,
     )
     return _render_llm_page(request, page_data, result)
 
 
 @router.post("/llm/test")
-def llm_test(request: Request):
-    result = test_active_llm()
+def llm_test(request: Request, prompt_text: str = Form(default="Reply with OK.")):
+    result = test_active_llm(prompt_text)
     selected_profile_name = result.get("selected_profile_name", "")
     redirect_url = _build_redirect_url(profile_name=selected_profile_name, result=result)
     return RedirectResponse(url=redirect_url, status_code=303)

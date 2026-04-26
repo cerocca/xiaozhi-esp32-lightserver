@@ -262,6 +262,13 @@ def _sanitize_llm_test_error(message: str) -> str:
     return sanitized[:240]
 
 
+def _normalize_llm_test_prompt(value: str) -> str:
+    text = str(value or "").replace("\r", " ").replace("\n", " ").strip()
+    while "  " in text:
+        text = text.replace("  ", " ")
+    return text[:240]
+
+
 def _sanitize_base_url_for_display(base_url: str) -> str:
     raw = str(base_url or "").strip()
     if not raw:
@@ -288,7 +295,7 @@ def _normalize_temperature_for_test(value) -> float:
         return 0.7
 
 
-def test_active_llm() -> dict:
+def test_active_llm(prompt_text: str = "Reply with OK.") -> dict:
     active = get_active_llm()
     profile_name = str(active.get("profile_name", "") or "").strip()
     provider_id = str(active.get("provider_id", "") or "").strip()
@@ -296,6 +303,7 @@ def test_active_llm() -> dict:
     model = str(active.get("model", "") or "").strip()
     api_key = str(active.get("api_key", "") or "").strip()
     temperature = active.get("temperature", 0.7)
+    normalized_prompt = _normalize_llm_test_prompt(prompt_text) or "Reply with OK."
     validation_status = active.get("validation_status", "ok")
     validation_warnings = active.get("validation_warnings", [])
     validation_warning_count = active.get("validation_warning_count", 0)
@@ -312,20 +320,21 @@ def test_active_llm() -> dict:
         "validation_status": validation_status,
         "validation_warnings": validation_warnings,
         "validation_warning_count": validation_warning_count,
+        "prompt_text": normalized_prompt,
         "logs_href": "/logs?source=xserver&lines=200",
-        "logs_label": "Vedi log Xiaozhi",
+        "logs_label": "View Xiaozhi logs",
     }
 
     if not profile_name:
         result["ok"] = False
-        result["message"] = "Nessun profilo LLM attivo da testare"
-        result["error_reason"] = "runtime.llm_profile non risolto"
+        result["message"] = "No active LLM profile to test"
+        result["error_reason"] = "runtime.llm_profile not resolved"
         return result
 
     if not endpoint:
         result["ok"] = False
-        result["message"] = f"Test LLM non eseguito per {profile_name}"
-        result["error_reason"] = "Endpoint chat/completions non disponibile"
+        result["message"] = f"LLM test not run for {profile_name}"
+        result["error_reason"] = "chat/completions endpoint unavailable"
         return result
 
     headers = {
@@ -339,11 +348,11 @@ def test_active_llm() -> dict:
         "messages": [
             {
                 "role": "user",
-                "content": "Reply with OK.",
+                "content": normalized_prompt,
             }
         ],
         "temperature": _normalize_temperature_for_test(temperature),
-        "max_tokens": 8,
+        "max_tokens": 80,
     }
 
     try:
@@ -367,13 +376,13 @@ def test_active_llm() -> dict:
                         reply_preview = str(message.get("content", "") or "").strip()
 
             result["ok"] = True
-            result["message"] = f"Test LLM completato: {profile_name}"
+            result["message"] = f"LLM test completed: {profile_name}"
             if reply_preview:
                 result["reply_preview"] = reply_preview[:160]
             return result
 
         result["ok"] = False
-        result["message"] = f"Test LLM fallito: {profile_name}"
+        result["message"] = f"LLM test failed: {profile_name}"
         try:
             data = response.json()
         except ValueError:
@@ -394,7 +403,7 @@ def test_active_llm() -> dict:
         return result
     except Exception as exc:
         result["ok"] = False
-        result["message"] = f"Test LLM fallito: {profile_name}"
+        result["message"] = f"LLM test failed: {profile_name}"
         result["error_reason"] = _sanitize_llm_test_error(str(exc))
         return result
 

@@ -119,6 +119,9 @@
         <div style="margin-top: 6px;">Check logs and <code>/api/health</code>: health remains operational context only and does not by itself prove which LLM profile is actually in use.</div>
       {% elif result.action_kind == "llm_test" %}
         <div style="margin-top: 8px;">Profile tested: <code>{{ result.selected_profile_name or result.selected_module_name or runtime_profile_name }}</code></div>
+        {% if result.prompt_text %}
+          <div style="margin-top: 6px;">Prompt sent: <code>{{ result.prompt_text }}</code></div>
+        {% endif %}
         {% if result.base_url %}
           <div style="margin-top: 6px;">Base URL used: <code>{{ result.base_url }}</code></div>
         {% endif %}
@@ -188,11 +191,25 @@
       <form method="post" action="/actions/xserver/restart" style="margin: 0;" onsubmit="return confirm('Restart Xiaozhi server?');">
         <button type="submit">Restart Xiaozhi</button>
       </form>
-      <form method="post" action="/llm/test" style="margin: 0;">
-        <button type="submit">Test LLM</button>
-      </form>
       <a class="button-link" href="/logs?source=xserver&lines=200">View Xiaozhi logs</a>
     </div>
+    <form method="post" action="/llm/test" style="margin-top: 12px;">
+      <label for="llm_test_prompt">Test prompt</label>
+      <div class="actions" style="margin-top: 8px;">
+        <input
+          type="text"
+          id="llm_test_prompt"
+          name="prompt_text"
+          value="{% if result and result.action_kind == 'llm_test' and result.prompt_text %}{{ result.prompt_text }}{% else %}Reply with OK.{% endif %}"
+          maxlength="240"
+          autocomplete="off"
+        >
+        <button type="submit">Test LLM</button>
+      </div>
+      <div class="muted" style="margin-top: 6px;">
+        Sends a short prompt using the active runtime LLM profile.
+      </div>
+    </form>
   </div>
 
   <div class="card" style="margin-bottom: 16px;">
