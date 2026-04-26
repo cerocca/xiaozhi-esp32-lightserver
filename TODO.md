@@ -21,10 +21,15 @@
 ---
 
 ### 🧪 Component test actions
-- [ ] Aggiungere azioni di test mirate per componenti/pagine chiave
+
+
+- [ ] Aggiungere test action per:
+  - TTS (generate short audio)
+  - ASR (basic transcription test)
+- [ ] Migliorare output test LLM:
+  - distinguere meglio error types (auth, timeout, http)
 - [ ] Coprire i flussi save / switch / restart con test action essenziali
 - [ ] Verificare casi health/error nelle pagine modulo
-
 ---
 
 ### 🧹 Runtime / config cleanup
