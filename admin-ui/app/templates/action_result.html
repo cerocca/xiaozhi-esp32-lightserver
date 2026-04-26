@@ -13,6 +13,19 @@
     {% endif %}
   </p>
 
+  {% if result.ok %}
+    <div class="flash flash-ok">
+      <div><strong>Restart completato</strong></div>
+      <div style="margin-top: 6px;">Il comando di restart è stato eseguito correttamente.</div>
+      <div style="margin-top: 6px;">Per confermare lo stato operativo, controlla i log e AI Stack. Lo stato da <code>/api/health</code> è solo contesto operativo.</div>
+    </div>
+  {% else %}
+    <div class="flash flash-err">
+      <div><strong>Restart non completato</strong></div>
+      <div style="margin-top: 6px;">Il comando di restart ha restituito un errore. Controlla l'output qui sotto e i log del servizio.</div>
+    </div>
+  {% endif %}
+
   <p><strong>Return code:</strong> {{ result.returncode }}</p>
 
   {% if result.stdout %}
@@ -26,8 +39,18 @@
   {% endif %}
 
   <div class="actions">
+    {% if logs_href %}
+      <a class="button-link" href="{{ logs_href }}">{{ logs_label or "Vai ai log" }}</a>
+    {% endif %}
+    {% if stack_href %}
+      <a class="button-link" href="{{ stack_href }}">{{ stack_label or "Apri AI Stack" }}</a>
+    {% endif %}
     <a class="button-link" href="/">Torna alla dashboard</a>
     <a class="button-link" href="/logs">Vai ai log</a>
   </div>
+
+  {% if health_note %}
+    <div class="muted" style="margin-top: 10px;">{{ health_note }}</div>
+  {% endif %}
 </section>
 {% endblock %}

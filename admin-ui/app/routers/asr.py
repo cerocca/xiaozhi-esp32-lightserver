@@ -51,21 +51,50 @@ def _build_redirect_url(profile_name="", result=None):
         backup_path = str(result.get("backup_path", "") or "").strip()
         if backup_path:
             params["backup_path"] = backup_path
+        action_kind = str(result.get("action_kind", "") or "").strip()
+        if action_kind:
+            params["action_kind"] = action_kind
+        selected_profile_name = str(result.get("selected_profile_name", "") or "").strip()
+        if selected_profile_name:
+            params["selected_profile_name"] = selected_profile_name
+        runtime_key = str(result.get("runtime_key", "") or "").strip()
+        if runtime_key:
+            params["runtime_key"] = runtime_key
+        logs_href = str(result.get("logs_href", "") or "").strip()
+        if logs_href:
+            params["logs_href"] = logs_href
+        logs_label = str(result.get("logs_label", "") or "").strip()
+        if logs_label:
+            params["logs_label"] = logs_label
 
     if not params:
         return "/asr"
     return f"/asr?{urlencode(params)}"
 
 
-def _get_result_from_query(ok, msg, backup_path):
-    if not any([ok, msg, backup_path]):
+def _get_result_from_query(ok, msg, backup_path, action_kind, selected_profile_name, runtime_key, logs_href, logs_label):
+    if not any([ok, msg, backup_path, action_kind, selected_profile_name, runtime_key, logs_href, logs_label]):
         return None
 
     return {
         "ok": str(ok or "").strip() == "1",
         "message": str(msg or "").strip(),
         "backup_path": str(backup_path or "").strip(),
+        "action_kind": str(action_kind or "").strip(),
+        "selected_profile_name": str(selected_profile_name or "").strip(),
+        "runtime_key": str(runtime_key or "").strip(),
+        "logs_href": str(logs_href or "").strip(),
+        "logs_label": str(logs_label or "").strip(),
     }
+
+
+def _annotate_switch_result(result, profile_name):
+    result["action_kind"] = "switch"
+    result["selected_profile_name"] = result.get("selected_profile_name", profile_name)
+    result["runtime_key"] = "runtime.asr_profile"
+    result["logs_href"] = "/logs?source=xserver&lines=200"
+    result["logs_label"] = "Vedi log Xiaozhi"
+    return result
 
 
 @router.get("/asr")
@@ -75,9 +104,23 @@ def asr_page(
     ok: str = Query(default=""),
     msg: str = Query(default=""),
     backup_path: str = Query(default=""),
+    action_kind: str = Query(default=""),
+    selected_profile_name: str = Query(default=""),
+    runtime_key: str = Query(default=""),
+    logs_href: str = Query(default=""),
+    logs_label: str = Query(default=""),
 ):
     page_data = get_asr_page_data(selected_profile_name=profile)
-    result = _get_result_from_query(ok, msg, backup_path)
+    result = _get_result_from_query(
+        ok,
+        msg,
+        backup_path,
+        action_kind,
+        selected_profile_name,
+        runtime_key,
+        logs_href,
+        logs_label,
+    )
     return _render_asr_page(request, page_data, result)
 
 
@@ -111,6 +154,7 @@ def asr_switch_profile(
     profile_name: str = Form(...),
 ):
     result = set_active_asr(profile_name)
+    result = _annotate_switch_result(result, profile_name)
     redirect_url = _build_redirect_url(result.get("selected_profile_name", profile_name), result)
     return RedirectResponse(url=redirect_url, status_code=303)
 

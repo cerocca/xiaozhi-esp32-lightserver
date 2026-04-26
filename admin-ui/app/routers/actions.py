@@ -21,6 +21,11 @@ def restart_xserver(request: Request):
             "request": request,
             "title": "Restart Xiaozhi server",
             "result": result,
+            "logs_href": "/logs?source=xserver&lines=200",
+            "logs_label": "Vedi log Xiaozhi",
+            "stack_href": "/ai",
+            "stack_label": "Apri AI Stack",
+            "health_note": "Controlla anche /api/health o AI Stack solo come contesto operativo, non come prova del profilo esatto in uso.",
         },
     )
 
@@ -38,6 +43,11 @@ def restart_piper(request: Request):
             "request": request,
             "title": "Restart Piper",
             "result": result,
+            "logs_href": "/logs?source=piper&lines=200",
+            "logs_label": "Vedi log Piper",
+            "stack_href": "/ai",
+            "stack_label": "Apri AI Stack",
+            "health_note": "Controlla anche /api/health o AI Stack solo come contesto operativo, non come prova del profilo esatto in uso.",
         },
     )
 

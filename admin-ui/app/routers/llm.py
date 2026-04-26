@@ -70,6 +70,21 @@ def _build_redirect_url(
         active_model = str(result.get("active_model", "") or "").strip()
         if active_model:
             params["active_model"] = active_model
+        action_kind = str(result.get("action_kind", "") or "").strip()
+        if action_kind:
+            params["action_kind"] = action_kind
+        selected_profile_name = str(result.get("selected_profile_name", "") or "").strip()
+        if selected_profile_name:
+            params["selected_profile_name"] = selected_profile_name
+        runtime_key = str(result.get("runtime_key", "") or "").strip()
+        if runtime_key:
+            params["runtime_key"] = runtime_key
+        logs_href = str(result.get("logs_href", "") or "").strip()
+        if logs_href:
+            params["logs_href"] = logs_href
+        logs_label = str(result.get("logs_label", "") or "").strip()
+        if logs_label:
+            params["logs_label"] = logs_label
 
     if not params:
         return "/llm"
@@ -77,8 +92,32 @@ def _build_redirect_url(
     return f"/llm?{urlencode(params)}"
 
 
-def _get_result_from_query(ok: str, msg: str, backup_path: str, selected_module_name: str, active_model: str):
-    has_flash = any([ok, msg, backup_path, selected_module_name, active_model])
+def _get_result_from_query(
+    ok: str,
+    msg: str,
+    backup_path: str,
+    selected_module_name: str,
+    active_model: str,
+    action_kind: str,
+    selected_profile_name: str,
+    runtime_key: str,
+    logs_href: str,
+    logs_label: str,
+):
+    has_flash = any(
+        [
+            ok,
+            msg,
+            backup_path,
+            selected_module_name,
+            active_model,
+            action_kind,
+            selected_profile_name,
+            runtime_key,
+            logs_href,
+            logs_label,
+        ]
+    )
     if not has_flash:
         return None
 
@@ -89,7 +128,21 @@ def _get_result_from_query(ok: str, msg: str, backup_path: str, selected_module_
         "backup_path": str(backup_path or "").strip(),
         "selected_module_name": str(selected_module_name or "").strip(),
         "active_model": str(active_model or "").strip(),
+        "action_kind": str(action_kind or "").strip(),
+        "selected_profile_name": str(selected_profile_name or "").strip(),
+        "runtime_key": str(runtime_key or "").strip(),
+        "logs_href": str(logs_href or "").strip(),
+        "logs_label": str(logs_label or "").strip(),
     }
+
+
+def _annotate_switch_result(result: dict, profile_name: str) -> dict:
+    result["action_kind"] = "switch"
+    result["selected_profile_name"] = result.get("selected_module_name", profile_name)
+    result["runtime_key"] = "runtime.llm_profile"
+    result["logs_href"] = "/logs?source=xserver&lines=200"
+    result["logs_label"] = "Vedi log Xiaozhi"
+    return result
 
 
 def _save_llm(
@@ -146,9 +199,25 @@ def llm_page(
     backup_path: str = Query(default=""),
     selected_module_name: str = Query(default=""),
     active_model: str = Query(default=""),
+    action_kind: str = Query(default=""),
+    selected_profile_name: str = Query(default=""),
+    runtime_key: str = Query(default=""),
+    logs_href: str = Query(default=""),
+    logs_label: str = Query(default=""),
 ):
     page_data = get_llm_page_data(selected_profile_name=profile)
-    result = _get_result_from_query(ok, msg, backup_path, selected_module_name, active_model)
+    result = _get_result_from_query(
+        ok,
+        msg,
+        backup_path,
+        selected_module_name,
+        active_model,
+        action_kind,
+        selected_profile_name,
+        runtime_key,
+        logs_href,
+        logs_label,
+    )
     return _render_llm_page(request, page_data, result)
 
 
@@ -234,6 +303,7 @@ def llm_switch_provider(
     profile_name: str = Form(...),
 ):
     result = set_active_llm(profile_name)
+    result = _annotate_switch_result(result, profile_name)
     selected_profile_name = result.get("selected_module_name", profile_name)
     redirect_url = _build_redirect_url(profile_name=selected_profile_name, result=result)
     return RedirectResponse(url=redirect_url, status_code=303)

@@ -78,12 +78,26 @@
       {% if result.message %}
         <div style="margin-top: 6px;">{{ result.message }}</div>
       {% endif %}
-      {% if result.ok %}
+      {% if result.ok and result.action_kind == "switch" %}
+        <div style="margin-top: 8px;">Profilo selezionato per il runtime: <code>{{ result.selected_profile_name }}</code></div>
+        <div style="margin-top: 6px;">Config salvata su <code>.config.yaml</code> aggiornando <code>{{ result.runtime_key or "runtime.asr_profile" }}</code>.</div>
+        <div style="margin-top: 6px;">Potrebbe essere necessario un restart Xiaozhi prima che il runtime applichi davvero questo profilo.</div>
+        <div style="margin-top: 6px;">Lo stato da <code>/api/health</code> resta solo contesto operativo e non conferma da solo quale profilo ASR sia effettivamente in uso.</div>
+      {% elif result.ok %}
         <div style="margin-top: 8px;">Config salvata su <code>.config.yaml</code>.</div>
         <div style="margin-top: 6px;">Potrebbe essere necessario riavviare Xiaozhi prima che la modifica si rifletta davvero nel runtime.</div>
       {% endif %}
       {% if result.backup_path %}
         <div style="margin-top: 8px;">Backup salvato in: <code>{{ result.backup_path }}</code></div>
+      {% endif %}
+      {% if result.ok and result.action_kind == "switch" %}
+        <div class="actions" style="margin-top: 12px;">
+          <form method="post" action="/actions/xserver/restart" style="margin: 0;" onsubmit="return confirm('Riavviare il server Xiaozhi?');">
+            <button type="submit">Restart Xiaozhi</button>
+          </form>
+          <a class="button-link" href="{{ result.logs_href or '/logs?source=xserver&lines=200' }}">{{ result.logs_label or 'Vedi log Xiaozhi' }}</a>
+          <a class="button-link" href="/ai">Apri AI Stack</a>
+        </div>
       {% endif %}
     </div>
   {% endif %}
