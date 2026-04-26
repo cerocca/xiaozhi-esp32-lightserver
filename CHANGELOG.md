@@ -16,6 +16,10 @@ All relevant Admin UI changes are recorded here.
   - clear indication that `.config.yaml` was updated via `runtime.*_profile`
   - reminder that restart may be required for changes to take effect
   - clarification that `/api/health` is operational context only
+  - Added minimal "Test LLM" action in Admin UI:
+		- executes a real OpenAI-compatible completion using the active runtime profile
+		- shows HTTP status, endpoint, and short reply preview
+		- provides a direct operational check independent from `/api/health`
 
 ### 🔄 Changed
 - Improved restart feedback pages:
