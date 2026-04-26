@@ -128,6 +128,10 @@ def _get_endpoint_field_name(block):
     return "api_url"
 
 
+def _api_key_is_intentionally_not_needed(value):
+    return str(value or "").strip().lower() == "not-needed"
+
+
 def _normalize_speed(value):
     raw = str(value if value is not None else "").strip()
     if not raw:
@@ -175,6 +179,35 @@ def _tts_requires_api_key(endpoint, model):
     return bool(endpoint) and not _is_local_endpoint(endpoint)
 
 
+def _validate_tts_profile(block):
+    block = block if isinstance(block, dict) else {}
+    warnings = []
+    type_value = str(block.get("type", "") or "").strip()
+    model = _get_model(block)
+    voice = str(block.get("voice", "") or "").strip()
+    endpoint = _get_endpoint(block)
+    api_key = str(block.get("api_key", "") or "").strip()
+
+    if not type_value:
+        warnings.append("type mancante")
+    if not model:
+        warnings.append("model mancante")
+    if not voice:
+        warnings.append("voice mancante")
+
+    if type_value == "openai":
+        if not endpoint:
+            warnings.append("endpoint URL mancante")
+        if (not endpoint or _tts_requires_api_key(endpoint, model)) and not api_key and not _api_key_is_intentionally_not_needed(api_key):
+            warnings.append("api_key mancante")
+
+    return {
+        "validation_status": "ok" if not warnings else "warning",
+        "validation_warnings": warnings,
+        "validation_warning_count": len(warnings),
+    }
+
+
 def _resolve_active_profile_name(data):
     tts_section = _get_dict(data, "TTS")
     runtime = _get_dict(data, "runtime")
@@ -203,6 +236,7 @@ def _build_profile_summary(profile_name, block, active_profile_name):
     model = _get_model(block)
     api_key = str(block.get("api_key", "") or "").strip()
     provider = _guess_provider(profile_name, block)
+    validation = _validate_tts_profile(block)
 
     return {
         "profile_name": str(profile_name or "").strip(),
@@ -218,6 +252,9 @@ def _build_profile_summary(profile_name, block, active_profile_name):
         "output_dir": str(block.get("output_dir", "") or "").strip(),
         "is_active": str(profile_name) == active_profile_name,
         "is_local_piper": provider == "piper",
+        "validation_status": validation["validation_status"],
+        "validation_warnings": validation["validation_warnings"],
+        "validation_warning_count": validation["validation_warning_count"],
     }
 
 
@@ -242,6 +279,9 @@ def _build_form_data(summary):
         "output_dir": summary.get("output_dir", ""),
         "is_active": summary.get("is_active", False),
         "is_local_piper": summary.get("is_local_piper", False),
+        "validation_status": summary.get("validation_status", "ok"),
+        "validation_warnings": summary.get("validation_warnings", []),
+        "validation_warning_count": summary.get("validation_warning_count", 0),
     }
 
 
@@ -260,6 +300,9 @@ def _default_selected_profile():
         "output_dir": preset["output_dir"],
         "is_active": False,
         "is_local_piper": True,
+        "validation_status": "ok",
+        "validation_warnings": [],
+        "validation_warning_count": 0,
     }
 
 
@@ -423,8 +466,12 @@ def set_active_tts(profile_name):
     new_yaml = yaml.safe_dump(data, allow_unicode=True, sort_keys=False)
     result = save_config(new_yaml)
     if result.get("ok"):
+        summary = _build_profile_summary(profile_name, tts_section.get(profile_name, {}), profile_name)
         result["message"] = f"Profilo attivo cambiato: {profile_name}"
         result["selected_profile_name"] = profile_name
+        result["validation_status"] = summary.get("validation_status", "ok")
+        result["validation_warnings"] = summary.get("validation_warnings", [])
+        result["validation_warning_count"] = summary.get("validation_warning_count", 0)
 
     return result
 

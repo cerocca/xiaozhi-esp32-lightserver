@@ -66,14 +66,25 @@ def _build_redirect_url(profile_name="", result=None):
         logs_label = str(result.get("logs_label", "") or "").strip()
         if logs_label:
             params["logs_label"] = logs_label
+        validation_status = str(result.get("validation_status", "") or "").strip()
+        if validation_status:
+            params["validation_status"] = validation_status
+        validation_warning_count = str(result.get("validation_warning_count", "") or "").strip()
+        if validation_warning_count:
+            params["validation_warning_count"] = validation_warning_count
+        validation_warnings = result.get("validation_warnings", [])
+        if isinstance(validation_warnings, list) and validation_warnings:
+            params["validation_warnings"] = "||".join(
+                str(item or "").strip() for item in validation_warnings if str(item or "").strip()
+            )
 
     if not params:
         return "/tts"
     return f"/tts?{urlencode(params)}"
 
 
-def _get_result_from_query(ok, msg, backup_path, action_kind, selected_profile_name, runtime_key, logs_href, logs_label):
-    if not any([ok, msg, backup_path, action_kind, selected_profile_name, runtime_key, logs_href, logs_label]):
+def _get_result_from_query(ok, msg, backup_path, action_kind, selected_profile_name, runtime_key, logs_href, logs_label, validation_status, validation_warning_count, validation_warnings):
+    if not any([ok, msg, backup_path, action_kind, selected_profile_name, runtime_key, logs_href, logs_label, validation_status, validation_warning_count, validation_warnings]):
         return None
 
     return {
@@ -85,6 +96,9 @@ def _get_result_from_query(ok, msg, backup_path, action_kind, selected_profile_n
         "runtime_key": str(runtime_key or "").strip(),
         "logs_href": str(logs_href or "").strip(),
         "logs_label": str(logs_label or "").strip(),
+        "validation_status": str(validation_status or "").strip(),
+        "validation_warning_count": int(str(validation_warning_count or "0").strip() or "0"),
+        "validation_warnings": [item for item in str(validation_warnings or "").split("||") if item.strip()],
     }
 
 
@@ -109,6 +123,9 @@ def tts_page(
     runtime_key: str = Query(default=""),
     logs_href: str = Query(default=""),
     logs_label: str = Query(default=""),
+    validation_status: str = Query(default=""),
+    validation_warning_count: str = Query(default=""),
+    validation_warnings: str = Query(default=""),
 ):
     page_data = get_tts_page_data(selected_profile_name=profile)
     result = _get_result_from_query(
@@ -120,6 +137,9 @@ def tts_page(
         runtime_key,
         logs_href,
         logs_label,
+        validation_status,
+        validation_warning_count,
+        validation_warnings,
     )
     return _render_tts_page(request, page_data, result)
 

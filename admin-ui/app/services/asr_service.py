@@ -120,6 +120,10 @@ def _get_endpoint_field_name(block):
     return "base_url"
 
 
+def _api_key_is_intentionally_not_needed(value):
+    return str(value or "").strip().lower() == "not-needed"
+
+
 def _guess_provider(profile_name, block):
     block = block if isinstance(block, dict) else {}
     endpoint = _get_endpoint(block).lower()
@@ -143,6 +147,32 @@ def _is_local_endpoint(endpoint):
 
 def _asr_requires_api_key(endpoint):
     return bool(endpoint) and not _is_local_endpoint(endpoint)
+
+
+def _validate_asr_profile(block):
+    block = block if isinstance(block, dict) else {}
+    warnings = []
+    type_value = str(block.get("type", "") or "").strip()
+    model = _get_model(block)
+    endpoint = _get_endpoint(block)
+    api_key = str(block.get("api_key", "") or "").strip()
+
+    if not type_value:
+        warnings.append("type mancante")
+    if not model:
+        warnings.append("model/model_name mancante")
+
+    if type_value == "openai":
+        if not endpoint:
+            warnings.append("endpoint URL mancante")
+        if (not endpoint or _asr_requires_api_key(endpoint)) and not api_key and not _api_key_is_intentionally_not_needed(api_key):
+            warnings.append("api_key mancante")
+
+    return {
+        "validation_status": "ok" if not warnings else "warning",
+        "validation_warnings": warnings,
+        "validation_warning_count": len(warnings),
+    }
 
 
 def _resolve_active_profile_name(data):
@@ -172,6 +202,7 @@ def _build_profile_summary(profile_name, block, active_profile_name):
     endpoint = _get_endpoint(block)
     model = _get_model(block)
     api_key = str(block.get("api_key", "") or "").strip()
+    validation = _validate_asr_profile(block)
 
     return {
         "profile_name": str(profile_name or "").strip(),
@@ -184,6 +215,9 @@ def _build_profile_summary(profile_name, block, active_profile_name):
         "requires_api_key": _asr_requires_api_key(endpoint),
         "output_dir": str(block.get("output_dir", "") or "").strip(),
         "is_active": str(profile_name) == active_profile_name,
+        "validation_status": validation["validation_status"],
+        "validation_warnings": validation["validation_warnings"],
+        "validation_warning_count": validation["validation_warning_count"],
     }
 
 
@@ -197,6 +231,9 @@ def _build_form_data(summary):
         "requires_api_key": summary.get("requires_api_key", False),
         "output_dir": summary.get("output_dir", ""),
         "is_active": summary.get("is_active", False),
+        "validation_status": summary.get("validation_status", "ok"),
+        "validation_warnings": summary.get("validation_warnings", []),
+        "validation_warning_count": summary.get("validation_warning_count", 0),
     }
 
 
@@ -211,6 +248,9 @@ def _default_selected_profile():
         "requires_api_key": _asr_requires_api_key(preset["endpoint"]),
         "output_dir": preset["output_dir"],
         "is_active": False,
+        "validation_status": "ok",
+        "validation_warnings": [],
+        "validation_warning_count": 0,
     }
 
 
@@ -368,8 +408,12 @@ def set_active_asr(profile_name):
     new_yaml = yaml.safe_dump(data, allow_unicode=True, sort_keys=False)
     result = save_config(new_yaml)
     if result.get("ok"):
+        summary = _build_profile_summary(profile_name, asr_section.get(profile_name, {}), profile_name)
         result["message"] = f"Profilo attivo cambiato: {profile_name}"
         result["selected_profile_name"] = profile_name
+        result["validation_status"] = summary.get("validation_status", "ok")
+        result["validation_warnings"] = summary.get("validation_warnings", [])
+        result["validation_warning_count"] = summary.get("validation_warning_count", 0)
 
     return result
 

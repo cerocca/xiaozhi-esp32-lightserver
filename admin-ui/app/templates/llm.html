@@ -107,8 +107,16 @@
       {% if result.ok and result.action_kind == "switch" %}
         <div style="margin-top: 8px;">Profilo selezionato per il runtime: <code>{{ result.selected_profile_name or result.selected_module_name }}</code></div>
         <div style="margin-top: 6px;">Config salvata su <code>.config.yaml</code> aggiornando <code>{{ result.runtime_key or "runtime.llm_profile" }}</code>.</div>
+        {% if result.validation_status == "warning" %}
+          <div style="margin-top: 6px;">Questo profilo ha avvisi di validazione: restart/runtime potrebbero fallire.</div>
+          {% for warning in result.validation_warnings %}
+            <div class="muted" style="margin-top: 4px;">- {{ warning }}</div>
+          {% endfor %}
+        {% else %}
+          <div style="margin-top: 6px;">Nessun avviso statico rilevato per questo profilo.</div>
+        {% endif %}
         <div style="margin-top: 6px;">Potrebbe essere necessario un restart Xiaozhi prima che il runtime applichi davvero questo profilo.</div>
-        <div style="margin-top: 6px;">Lo stato da <code>/api/health</code> resta solo contesto operativo e non prova da solo quale profilo LLM sia effettivamente in uso.</div>
+        <div style="margin-top: 6px;">Controlla log e <code>/api/health</code>: la health resta solo contesto operativo e non prova da sola quale profilo LLM sia effettivamente in uso.</div>
       {% elif result.ok %}
         <div style="margin-top: 8px;">Config salvata su <code>.config.yaml</code>.</div>
         <div style="margin-top: 6px;">Potrebbe essere necessario riavviare Xiaozhi prima che la modifica si rifletta davvero nel runtime.</div>
@@ -177,6 +185,9 @@
                   {% if profile.is_active %}
                     <span class="badge ok">ATTIVO</span>
                   {% endif %}
+                  <span class="badge {% if profile.validation_status == 'ok' %}ok{% else %}warn{% endif %}">
+                    {% if profile.validation_status == 'ok' %}OK{% else %}WARNING{% endif %}
+                  </span>
                   {% if selected_profile_name and selected_profile_name == profile.profile_name %}
                     <span class="badge info">IN MODIFICA</span>
                   {% endif %}
@@ -193,6 +204,12 @@
                 <div class="muted" style="margin-top: 4px;">Model: {{ profile.model or "n/d" }}</div>
                 <div class="muted" style="margin-top: 4px;">Base URL: <code title="{{ profile.base_url or 'n/d' }}">{{ (profile.base_url or "n/d")|truncate(54, True) }}</code></div>
                 <div class="muted" style="margin-top: 4px;">API key: {% if profile.has_api_key %}✔ presente{% else %}✖ mancante{% endif %}</div>
+                {% if profile.validation_warnings %}
+                  <div class="muted" style="margin-top: 6px;">Avvisi profilo:</div>
+                  {% for warning in profile.validation_warnings %}
+                    <div class="muted" style="margin-top: 4px;">- {{ warning }}</div>
+                  {% endfor %}
+                {% endif %}
                 {% if profile.is_legacy and profile.legacy_note %}
                   <div class="muted" style="margin-top: 6px;">{{ profile.legacy_note }}</div>
                 {% endif %}
@@ -283,6 +300,19 @@
       <div class="muted" style="margin-top: 6px;">
         Il salvataggio aggiorna solo il profilo selezionato e lascia intatti gli altri blocchi <code>LLM</code>. Non cambia il profilo runtime attivo finche non usi <strong>Rendi attivo</strong>.
       </div>
+      <div class="muted" style="margin-top: 6px;">
+        Validazione profilo: <span class="badge {% if selected.validation_status == 'ok' %}ok{% else %}warn{% endif %}">{% if selected.validation_status == 'ok' %}OK{% else %}WARNING{% endif %}</span>
+        {% if selected.validation_warning_count %}
+          {{ selected.validation_warning_count }} avvisi statici.
+        {% else %}
+          nessun avviso statico.
+        {% endif %}
+      </div>
+      {% if selected.validation_warnings %}
+        {% for warning in selected.validation_warnings %}
+          <div class="muted" style="margin-top: 4px;">- {{ warning }}</div>
+        {% endfor %}
+      {% endif %}
       {% if selected_profile_name %}
         <div class="status-grid" style="margin-top: 12px;">
           <div class="status-item">

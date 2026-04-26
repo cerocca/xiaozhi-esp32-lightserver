@@ -199,6 +199,10 @@ def _provider_requires_api_key(provider_id: str) -> bool:
     return provider_id in {"groq", "openai", "anthropic"}
 
 
+def _api_key_is_intentionally_not_needed(value) -> bool:
+    return str(value or "").strip().lower() == "not-needed"
+
+
 def _get_block_model(block: dict) -> str:
     if not isinstance(block, dict):
         return ""
@@ -208,6 +212,32 @@ def _get_block_model(block: dict) -> str:
         return model
 
     return str(block.get("model_name", "") or "").strip()
+
+
+def _validate_llm_profile(provider_id: str, block: dict) -> dict:
+    block = block if isinstance(block, dict) else {}
+    warnings = []
+    type_value = str(block.get("type", "") or "").strip()
+    model = _get_block_model(block)
+    base_url = str(block.get("base_url", "") or "").strip()
+    api_key = str(block.get("api_key", "") or "").strip()
+
+    if not type_value:
+        warnings.append("type mancante")
+    if not model:
+        warnings.append("model mancante")
+
+    if type_value == "openai":
+        if not base_url:
+            warnings.append("base_url mancante")
+        if provider_id != "ollama" and not api_key and not _api_key_is_intentionally_not_needed(api_key):
+            warnings.append("api_key mancante")
+
+    return {
+        "validation_status": "ok" if not warnings else "warning",
+        "validation_warnings": warnings,
+        "validation_warning_count": len(warnings),
+    }
 
 
 def _normalize_llm_block_for_write(block: dict, model: str) -> dict:
@@ -247,6 +277,7 @@ def _build_profile_summary(profile_name: str, block: dict, active_profile_name: 
     provider_id = _guess_provider(profile_name, block) if profile_name or block else ""
     has_api_key = _profile_has_api_key(block.get("api_key"))
     is_legacy = _is_legacy_profile(profile_name, provider_id)
+    validation = _validate_llm_profile(provider_id, block)
 
     return {
         "profile_name": profile_name,
@@ -265,6 +296,9 @@ def _build_profile_summary(profile_name: str, block: dict, active_profile_name: 
             "Profilo legacy, consigliato creare un nuovo profilo."
             if is_legacy else ""
         ),
+        "validation_status": validation["validation_status"],
+        "validation_warnings": validation["validation_warnings"],
+        "validation_warning_count": validation["validation_warning_count"],
         "raw_block": block,
     }
 
@@ -308,6 +342,9 @@ def _build_profile_form_data(summary: dict) -> dict:
         "requires_api_key": summary.get("requires_api_key", _provider_requires_api_key(provider_id)),
         "is_legacy": summary.get("is_legacy", False),
         "legacy_note": summary.get("legacy_note", ""),
+        "validation_status": summary.get("validation_status", "ok"),
+        "validation_warnings": summary.get("validation_warnings", []),
+        "validation_warning_count": summary.get("validation_warning_count", 0),
     }
 
 
@@ -334,6 +371,9 @@ def _build_llm_page_data(selected_profile_name: str = "") -> dict:
             "temperature": presets.get(default_provider_id, {}).get("default_temperature", 0.7),
             "has_api_key": False,
             "is_active": False,
+            "validation_status": "ok",
+            "validation_warnings": [],
+            "validation_warning_count": 0,
         }
 
     return {
@@ -474,6 +514,9 @@ def set_active_llm(profile_name: str) -> dict:
         result["provider"] = active.get("provider_id", "")
         result["active_model"] = active.get("model", "")
         result["active_base_url"] = active.get("base_url", "")
+        result["validation_status"] = active.get("validation_status", "ok")
+        result["validation_warnings"] = active.get("validation_warnings", [])
+        result["validation_warning_count"] = active.get("validation_warning_count", 0)
 
     return result
 
