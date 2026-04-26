@@ -1,5 +1,7 @@
 import re
+from urllib.parse import urlsplit
 
+import httpx
 import yaml
 
 from app.services.config_service import read_config_text, save_config
@@ -175,6 +177,58 @@ def _validate_asr_profile(block):
     }
 
 
+def _build_asr_test_endpoint(endpoint: str) -> str:
+    normalized = str(endpoint or "").strip().rstrip("/")
+    if not normalized:
+        return ""
+    if normalized.endswith("/audio/transcriptions"):
+        return normalized
+    return f"{normalized}/audio/transcriptions"
+
+
+def _sanitize_asr_test_error(message: str) -> str:
+    text = str(message or "").strip()
+    if not text:
+        return "Unknown error"
+
+    sanitized = text.replace("\n", " ").replace("\r", " ")
+    while "  " in sanitized:
+        sanitized = sanitized.replace("  ", " ")
+
+    return sanitized[:240]
+
+
+def _sanitize_endpoint_for_display(endpoint: str) -> str:
+    raw = str(endpoint or "").strip()
+    if not raw:
+        return ""
+
+    try:
+        parsed = urlsplit(raw)
+    except Exception:
+        return raw[:160]
+
+    scheme = parsed.scheme or "http"
+    netloc = parsed.netloc
+    path = parsed.path or ""
+    if not netloc:
+        return raw[:160]
+
+    return f"{scheme}://{netloc}{path}"[:160]
+
+
+def _normalize_asr_filename(value: str) -> str:
+    filename = str(value or "").strip()
+    return filename[:120] if filename else "test-audio.webm"
+
+
+def _sanitize_transcription_preview(value: str) -> str:
+    text = str(value or "").replace("\n", " ").replace("\r", " ").strip()
+    while "  " in text:
+        text = text.replace("  ", " ")
+    return text[:240]
+
+
 def _resolve_active_profile_name(data):
     asr_section = _get_dict(data, "ASR")
     runtime = _get_dict(data, "runtime")
@@ -280,6 +334,120 @@ def get_active_asr():
         block = {}
 
     return _build_profile_summary(active_profile_name, block, active_profile_name)
+
+
+def test_active_asr(audio_bytes: bytes, filename: str, content_type: str = "") -> dict:
+    active = get_active_asr()
+    profile_name = str(active.get("profile_name", "") or "").strip()
+    endpoint = _build_asr_test_endpoint(active.get("endpoint", ""))
+    model = str(active.get("model", "") or "").strip()
+    api_key = ""
+
+    data = _safe_load_config_data()
+    asr_section = _get_dict(data, "ASR")
+    active_block = asr_section.get(profile_name, {})
+    if isinstance(active_block, dict):
+        api_key = str(active_block.get("api_key", "") or "").strip()
+
+    validation_status = active.get("validation_status", "ok")
+    validation_warnings = active.get("validation_warnings", [])
+    validation_warning_count = active.get("validation_warning_count", 0)
+    safe_filename = _normalize_asr_filename(filename)
+
+    result = {
+        "action_kind": "asr_test",
+        "selected_profile_name": profile_name,
+        "endpoint": _sanitize_endpoint_for_display(endpoint),
+        "validation_status": validation_status,
+        "validation_warnings": validation_warnings,
+        "validation_warning_count": validation_warning_count,
+        "test_filename": safe_filename,
+        "logs_href": "/logs?source=xserver&lines=200",
+        "logs_label": "View Xiaozhi logs",
+    }
+
+    if not profile_name:
+        result["ok"] = False
+        result["message"] = "No active ASR profile to test"
+        result["error_reason"] = "runtime.asr_profile not resolved"
+        return result
+
+    if not endpoint:
+        result["ok"] = False
+        result["message"] = f"ASR test not run: {profile_name}"
+        result["error_reason"] = "audio/transcriptions endpoint unavailable"
+        return result
+
+    if not audio_bytes:
+        result["ok"] = False
+        result["message"] = f"ASR test not run: {profile_name}"
+        result["error_reason"] = "No audio file uploaded"
+        return result
+
+    headers = {}
+    if api_key and not _api_key_is_intentionally_not_needed(api_key):
+        headers["Authorization"] = f"Bearer {api_key}"
+
+    files = {
+        "file": (
+            safe_filename,
+            audio_bytes,
+            str(content_type or "").strip() or "application/octet-stream",
+        )
+    }
+    data_payload = {
+        "model": model,
+    }
+
+    try:
+        with httpx.Client(timeout=15.0) as client:
+            response = client.post(endpoint, headers=headers, data=data_payload, files=files)
+        result["http_status"] = response.status_code
+
+        if response.is_success:
+            transcription_text = ""
+            try:
+                payload = response.json()
+            except ValueError:
+                payload = {}
+
+            if isinstance(payload, dict):
+                transcription_text = str(payload.get("text", "") or "").strip()
+
+            if not transcription_text:
+                transcription_text = str(response.text or "").strip()
+
+            result["ok"] = True
+            result["message"] = f"ASR test completed: {profile_name}"
+            result["transcription_preview"] = _sanitize_transcription_preview(transcription_text)
+            return result
+
+        result["ok"] = False
+        result["message"] = f"ASR test failed: {profile_name}"
+
+        error_reason = ""
+        try:
+            payload = response.json()
+        except ValueError:
+            payload = {}
+
+        if isinstance(payload, dict):
+            error = payload.get("error")
+            if isinstance(error, dict):
+                error_reason = str(error.get("message", "") or "").strip()
+            elif error:
+                error_reason = str(error).strip()
+
+        if not error_reason:
+            error_reason = f"HTTP {response.status_code}"
+
+        result["error_reason"] = _sanitize_asr_test_error(error_reason)
+        return result
+    except Exception as exc:
+        result["ok"] = False
+        result["message"] = f"ASR test failed: {profile_name}"
+        result["error_reason"] = _sanitize_asr_test_error(str(exc))
+        return result
 
 
 def get_asr_page_data(selected_profile_name=""):

@@ -91,6 +91,30 @@
         {% endif %}
         <div style="margin-top: 6px;">A Xiaozhi restart may be required before the runtime actually applies this profile.</div>
         <div style="margin-top: 6px;">Check logs and <code>/api/health</code>: health remains operational context only and does not by itself confirm which ASR profile is actually in use.</div>
+      {% elif result.action_kind == "asr_test" %}
+        <div style="margin-top: 8px;">Profile tested: <code>{{ result.selected_profile_name or runtime_asr_profile }}</code></div>
+        {% if result.test_filename %}
+          <div style="margin-top: 6px;">Audio file: <code>{{ result.test_filename }}</code></div>
+        {% endif %}
+        {% if result.endpoint %}
+          <div style="margin-top: 6px;">Endpoint tested: <code>{{ result.endpoint }}</code></div>
+        {% endif %}
+        {% if result.http_status %}
+          <div style="margin-top: 6px;">HTTP status: <strong>{{ result.http_status }}</strong></div>
+        {% endif %}
+        {% if result.validation_status == "warning" %}
+          <div style="margin-top: 6px;">The active profile has validation warnings: the test was run anyway.</div>
+          {% for warning in result.validation_warnings %}
+            <div class="muted" style="margin-top: 4px;">- {{ warning }}</div>
+          {% endfor %}
+        {% endif %}
+        {% if result.transcription_preview %}
+          <div style="margin-top: 6px;">Transcription: <code>{{ result.transcription_preview }}</code></div>
+        {% endif %}
+        {% if result.error_reason %}
+          <div style="margin-top: 6px;">Reason: {{ result.error_reason }}</div>
+        {% endif %}
+        <div style="margin-top: 6px;">This ASR test is separate from <code>/api/health</code> and performs a minimal transcription request on the active runtime profile.</div>
       {% elif result.ok %}
         <div style="margin-top: 8px;">Config saved to <code>.config.yaml</code>.</div>
         <div style="margin-top: 6px;">A Xiaozhi restart may be required before the change is actually reflected in the runtime.</div>
@@ -121,6 +145,16 @@
       </form>
       <a class="button-link" href="/logs?source=xserver&lines=200">View Xiaozhi logs</a>
     </div>
+    <form method="post" action="/asr/test" enctype="multipart/form-data" style="margin-top: 12px;">
+      <label for="asr_test_file">Test audio</label>
+      <div class="actions" style="margin-top: 8px;">
+        <input type="file" id="asr_test_file" name="audio_file" accept="audio/*" required>
+        <button type="submit">Test ASR</button>
+      </div>
+      <div class="muted" style="margin-top: 6px;">
+        Upload a short audio clip to transcribe it with the active runtime ASR profile.
+      </div>
+    </form>
   </div>
 
   <div class="card" style="margin-bottom: 16px;">

@@ -1,6 +1,6 @@
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, Form, Query, Request
+from fastapi import APIRouter, File, Form, Query, Request, UploadFile
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
@@ -11,6 +11,7 @@ from app.services.asr_service import (
     delete_asr_profile,
     get_asr_page_data,
     set_active_asr,
+    test_active_asr,
     update_single_asr_profile,
 )
 
@@ -77,14 +78,29 @@ def _build_redirect_url(profile_name="", result=None):
             params["validation_warnings"] = "||".join(
                 str(item or "").strip() for item in validation_warnings if str(item or "").strip()
             )
+        endpoint = str(result.get("endpoint", "") or "").strip()
+        if endpoint:
+            params["endpoint"] = endpoint
+        http_status = str(result.get("http_status", "") or "").strip()
+        if http_status:
+            params["http_status"] = http_status
+        error_reason = str(result.get("error_reason", "") or "").strip()
+        if error_reason:
+            params["error_reason"] = error_reason
+        transcription_preview = str(result.get("transcription_preview", "") or "").strip()
+        if transcription_preview:
+            params["transcription_preview"] = transcription_preview
+        test_filename = str(result.get("test_filename", "") or "").strip()
+        if test_filename:
+            params["test_filename"] = test_filename
 
     if not params:
         return "/asr"
     return f"/asr?{urlencode(params)}"
 
 
-def _get_result_from_query(ok, msg, backup_path, action_kind, selected_profile_name, runtime_key, logs_href, logs_label, validation_status, validation_warning_count, validation_warnings):
-    if not any([ok, msg, backup_path, action_kind, selected_profile_name, runtime_key, logs_href, logs_label, validation_status, validation_warning_count, validation_warnings]):
+def _get_result_from_query(ok, msg, backup_path, action_kind, selected_profile_name, runtime_key, logs_href, logs_label, validation_status, validation_warning_count, validation_warnings, endpoint, http_status, error_reason, transcription_preview, test_filename):
+    if not any([ok, msg, backup_path, action_kind, selected_profile_name, runtime_key, logs_href, logs_label, validation_status, validation_warning_count, validation_warnings, endpoint, http_status, error_reason, transcription_preview, test_filename]):
         return None
 
     return {
@@ -99,6 +115,11 @@ def _get_result_from_query(ok, msg, backup_path, action_kind, selected_profile_n
         "validation_status": str(validation_status or "").strip(),
         "validation_warning_count": int(str(validation_warning_count or "0").strip() or "0"),
         "validation_warnings": [item for item in str(validation_warnings or "").split("||") if item.strip()],
+        "endpoint": str(endpoint or "").strip(),
+        "http_status": str(http_status or "").strip(),
+        "error_reason": str(error_reason or "").strip(),
+        "transcription_preview": str(transcription_preview or "").strip(),
+        "test_filename": str(test_filename or "").strip(),
     }
 
 
@@ -126,6 +147,11 @@ def asr_page(
     validation_status: str = Query(default=""),
     validation_warning_count: str = Query(default=""),
     validation_warnings: str = Query(default=""),
+    endpoint: str = Query(default=""),
+    http_status: str = Query(default=""),
+    error_reason: str = Query(default=""),
+    transcription_preview: str = Query(default=""),
+    test_filename: str = Query(default=""),
 ):
     page_data = get_asr_page_data(selected_profile_name=profile)
     result = _get_result_from_query(
@@ -140,8 +166,28 @@ def asr_page(
         validation_status,
         validation_warning_count,
         validation_warnings,
+        endpoint,
+        http_status,
+        error_reason,
+        transcription_preview,
+        test_filename,
     )
     return _render_asr_page(request, page_data, result)
+
+
+@router.post("/asr/test")
+async def asr_test(
+    request: Request,
+    audio_file: UploadFile = File(...),
+):
+    audio_bytes = await audio_file.read()
+    result = test_active_asr(
+        audio_bytes=audio_bytes,
+        filename=audio_file.filename or "",
+        content_type=audio_file.content_type or "",
+    )
+    redirect_url = _build_redirect_url(result.get("selected_profile_name", ""), result)
+    return RedirectResponse(url=redirect_url, status_code=303)
 
 
 @router.post("/asr/profiles/save")
