@@ -1,5 +1,8 @@
-import yaml
 import re
+from urllib.parse import urlsplit
+
+import httpx
+import yaml
 
 from app.services.config_service import read_config_text, save_config
 
@@ -238,6 +241,162 @@ def _validate_llm_profile(provider_id: str, block: dict) -> dict:
         "validation_warnings": warnings,
         "validation_warning_count": len(warnings),
     }
+
+
+def _build_llm_test_endpoint(base_url: str) -> str:
+    normalized = str(base_url or "").strip().rstrip("/")
+    if not normalized:
+        return ""
+    return f"{normalized}/chat/completions"
+
+
+def _sanitize_llm_test_error(message: str) -> str:
+    text = str(message or "").strip()
+    if not text:
+        return "Errore sconosciuto"
+
+    sanitized = text.replace("\n", " ").replace("\r", " ")
+    while "  " in sanitized:
+        sanitized = sanitized.replace("  ", " ")
+
+    return sanitized[:240]
+
+
+def _sanitize_base_url_for_display(base_url: str) -> str:
+    raw = str(base_url or "").strip()
+    if not raw:
+        return ""
+
+    try:
+        parsed = urlsplit(raw)
+    except Exception:
+        return raw[:160]
+
+    scheme = parsed.scheme or "http"
+    netloc = parsed.netloc
+    path = parsed.path or ""
+    if not netloc:
+        return raw[:160]
+
+    return f"{scheme}://{netloc}{path}"[:160]
+
+
+def _normalize_temperature_for_test(value) -> float:
+    try:
+        return max(0.0, min(2.0, float(value if value is not None else 0.7)))
+    except (TypeError, ValueError):
+        return 0.7
+
+
+def test_active_llm() -> dict:
+    active = get_active_llm()
+    profile_name = str(active.get("profile_name", "") or "").strip()
+    provider_id = str(active.get("provider_id", "") or "").strip()
+    base_url = str(active.get("base_url", "") or "").strip()
+    model = str(active.get("model", "") or "").strip()
+    api_key = str(active.get("api_key", "") or "").strip()
+    temperature = active.get("temperature", 0.7)
+    validation_status = active.get("validation_status", "ok")
+    validation_warnings = active.get("validation_warnings", [])
+    validation_warning_count = active.get("validation_warning_count", 0)
+    endpoint = _build_llm_test_endpoint(base_url)
+
+    result = {
+        "action_kind": "llm_test",
+        "selected_profile_name": profile_name,
+        "selected_module_name": profile_name,
+        "provider": provider_id,
+        "active_model": model,
+        "base_url": _sanitize_base_url_for_display(base_url),
+        "test_endpoint": _sanitize_base_url_for_display(endpoint),
+        "validation_status": validation_status,
+        "validation_warnings": validation_warnings,
+        "validation_warning_count": validation_warning_count,
+        "logs_href": "/logs?source=xserver&lines=200",
+        "logs_label": "Vedi log Xiaozhi",
+    }
+
+    if not profile_name:
+        result["ok"] = False
+        result["message"] = "Nessun profilo LLM attivo da testare"
+        result["error_reason"] = "runtime.llm_profile non risolto"
+        return result
+
+    if not endpoint:
+        result["ok"] = False
+        result["message"] = f"Test LLM non eseguito per {profile_name}"
+        result["error_reason"] = "Endpoint chat/completions non disponibile"
+        return result
+
+    headers = {
+        "Content-Type": "application/json",
+    }
+    if api_key and not _api_key_is_intentionally_not_needed(api_key):
+        headers["Authorization"] = f"Bearer {api_key}"
+
+    payload = {
+        "model": model,
+        "messages": [
+            {
+                "role": "user",
+                "content": "Reply with OK.",
+            }
+        ],
+        "temperature": _normalize_temperature_for_test(temperature),
+        "max_tokens": 8,
+    }
+
+    try:
+        with httpx.Client(timeout=8.0) as client:
+            response = client.post(endpoint, headers=headers, json=payload)
+        result["http_status"] = response.status_code
+
+        if response.is_success:
+            reply_preview = ""
+            try:
+                data = response.json()
+            except ValueError:
+                data = {}
+
+            if isinstance(data, dict):
+                choices = data.get("choices", [])
+                if isinstance(choices, list) and choices:
+                    first_choice = choices[0] if isinstance(choices[0], dict) else {}
+                    message = first_choice.get("message", {})
+                    if isinstance(message, dict):
+                        reply_preview = str(message.get("content", "") or "").strip()
+
+            result["ok"] = True
+            result["message"] = f"Test LLM completato: {profile_name}"
+            if reply_preview:
+                result["reply_preview"] = reply_preview[:160]
+            return result
+
+        result["ok"] = False
+        result["message"] = f"Test LLM fallito: {profile_name}"
+        try:
+            data = response.json()
+        except ValueError:
+            data = {}
+
+        error_reason = ""
+        if isinstance(data, dict):
+            error = data.get("error")
+            if isinstance(error, dict):
+                error_reason = str(error.get("message", "") or "").strip()
+            elif error:
+                error_reason = str(error).strip()
+
+        if not error_reason:
+            error_reason = f"HTTP {response.status_code}"
+
+        result["error_reason"] = _sanitize_llm_test_error(error_reason)
+        return result
+    except Exception as exc:
+        result["ok"] = False
+        result["message"] = f"Test LLM fallito: {profile_name}"
+        result["error_reason"] = _sanitize_llm_test_error(str(exc))
+        return result
 
 
 def _normalize_llm_block_for_write(block: dict, model: str) -> dict:

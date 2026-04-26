@@ -13,6 +13,7 @@ from app.services.llm_service import (
     get_llm_page_data,
     normalize_llm_form_data,
     set_active_llm,
+    test_active_llm,
     update_single_provider,
     update_llm_config,
 )
@@ -96,6 +97,21 @@ def _build_redirect_url(
             params["validation_warnings"] = "||".join(
                 str(item or "").strip() for item in validation_warnings if str(item or "").strip()
             )
+        base_url = str(result.get("base_url", "") or "").strip()
+        if base_url:
+            params["base_url"] = base_url
+        test_endpoint = str(result.get("test_endpoint", "") or "").strip()
+        if test_endpoint:
+            params["test_endpoint"] = test_endpoint
+        http_status = str(result.get("http_status", "") or "").strip()
+        if http_status:
+            params["http_status"] = http_status
+        error_reason = str(result.get("error_reason", "") or "").strip()
+        if error_reason:
+            params["error_reason"] = error_reason
+        reply_preview = str(result.get("reply_preview", "") or "").strip()
+        if reply_preview:
+            params["reply_preview"] = reply_preview
 
     if not params:
         return "/llm"
@@ -117,6 +133,11 @@ def _get_result_from_query(
     validation_status: str,
     validation_warning_count: str,
     validation_warnings: str,
+    base_url: str,
+    test_endpoint: str,
+    http_status: str,
+    error_reason: str,
+    reply_preview: str,
 ):
     has_flash = any(
         [
@@ -133,6 +154,11 @@ def _get_result_from_query(
             validation_status,
             validation_warning_count,
             validation_warnings,
+            base_url,
+            test_endpoint,
+            http_status,
+            error_reason,
+            reply_preview,
         ]
     )
     if not has_flash:
@@ -153,6 +179,11 @@ def _get_result_from_query(
         "validation_status": str(validation_status or "").strip(),
         "validation_warning_count": int(str(validation_warning_count or "0").strip() or "0"),
         "validation_warnings": [item for item in str(validation_warnings or "").split("||") if item.strip()],
+        "base_url": str(base_url or "").strip(),
+        "test_endpoint": str(test_endpoint or "").strip(),
+        "http_status": str(http_status or "").strip(),
+        "error_reason": str(error_reason or "").strip(),
+        "reply_preview": str(reply_preview or "").strip(),
     }
 
 
@@ -227,6 +258,11 @@ def llm_page(
     validation_status: str = Query(default=""),
     validation_warning_count: str = Query(default=""),
     validation_warnings: str = Query(default=""),
+    base_url: str = Query(default=""),
+    test_endpoint: str = Query(default=""),
+    http_status: str = Query(default=""),
+    error_reason: str = Query(default=""),
+    reply_preview: str = Query(default=""),
 ):
     page_data = get_llm_page_data(selected_profile_name=profile)
     result = _get_result_from_query(
@@ -243,8 +279,21 @@ def llm_page(
         validation_status,
         validation_warning_count,
         validation_warnings,
+        base_url,
+        test_endpoint,
+        http_status,
+        error_reason,
+        reply_preview,
     )
     return _render_llm_page(request, page_data, result)
+
+
+@router.post("/llm/test")
+def llm_test(request: Request):
+    result = test_active_llm()
+    selected_profile_name = result.get("selected_profile_name", "")
+    redirect_url = _build_redirect_url(profile_name=selected_profile_name, result=result)
+    return RedirectResponse(url=redirect_url, status_code=303)
 
 
 @router.post("/llm/providers/save")

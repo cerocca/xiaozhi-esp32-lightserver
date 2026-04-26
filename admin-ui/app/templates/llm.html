@@ -117,6 +117,30 @@
         {% endif %}
         <div style="margin-top: 6px;">Potrebbe essere necessario un restart Xiaozhi prima che il runtime applichi davvero questo profilo.</div>
         <div style="margin-top: 6px;">Controlla log e <code>/api/health</code>: la health resta solo contesto operativo e non prova da sola quale profilo LLM sia effettivamente in uso.</div>
+      {% elif result.action_kind == "llm_test" %}
+        <div style="margin-top: 8px;">Profilo testato: <code>{{ result.selected_profile_name or result.selected_module_name or runtime_profile_name }}</code></div>
+        {% if result.base_url %}
+          <div style="margin-top: 6px;">Base URL usata: <code>{{ result.base_url }}</code></div>
+        {% endif %}
+        {% if result.test_endpoint %}
+          <div style="margin-top: 6px;">Endpoint testato: <code>{{ result.test_endpoint }}</code></div>
+        {% endif %}
+        {% if result.http_status %}
+          <div style="margin-top: 6px;">HTTP status: <strong>{{ result.http_status }}</strong></div>
+        {% endif %}
+        {% if result.validation_status == "warning" %}
+          <div style="margin-top: 6px;">Il profilo attivo ha avvisi di validazione: il test è stato eseguito comunque.</div>
+          {% for warning in result.validation_warnings %}
+            <div class="muted" style="margin-top: 4px;">- {{ warning }}</div>
+          {% endfor %}
+        {% endif %}
+        {% if result.reply_preview %}
+          <div style="margin-top: 6px;">Risposta breve: <code>{{ result.reply_preview }}</code></div>
+        {% endif %}
+        {% if result.error_reason %}
+          <div style="margin-top: 6px;">Motivo: {{ result.error_reason }}</div>
+        {% endif %}
+        <div style="margin-top: 6px;">Questo test LLM è separato da <code>/api/health</code> e prova una richiesta completion minima sul profilo runtime attivo.</div>
       {% elif result.ok %}
         <div style="margin-top: 8px;">Config salvata su <code>.config.yaml</code>.</div>
         <div style="margin-top: 6px;">Potrebbe essere necessario riavviare Xiaozhi prima che la modifica si rifletta davvero nel runtime.</div>
@@ -163,6 +187,9 @@
     <div class="actions" style="margin-top: 12px;">
       <form method="post" action="/actions/xserver/restart" style="margin: 0;" onsubmit="return confirm('Riavviare il server Xiaozhi?');">
         <button type="submit">Restart Xiaozhi</button>
+      </form>
+      <form method="post" action="/llm/test" style="margin: 0;">
+        <button type="submit">Test LLM</button>
       </form>
       <a class="button-link" href="/logs?source=xserver&lines=200">Vedi log Xiaozhi</a>
     </div>
