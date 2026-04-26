@@ -31,8 +31,8 @@ DEFAULT_BACKEND_ROOT = _detect_backend_root()
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=BASE_DIR / ".env", env_file_encoding="utf-8")
 
-    admin_ui_version: str = "0.1.5"
-    admin_ui_repo_url: str = "https://github.com/cerocca/xiaozhi-admin-ui"
+    admin_ui_version: str = "0.2.1"
+    admin_ui_repo_url: str = "https://github.com/cerocca/xiaozhi-esp32-lightserver/tree/main/admin-ui"
 
     admin_ui_host: str = "192.168.1.69"
     admin_ui_port: int = 8088
