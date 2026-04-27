@@ -58,7 +58,7 @@ def load_config_editor_state(result=None) -> dict:
         return {
             "content": "",
             "valid": False,
-            "validation_message": f"Unable to read the current config: {e}",
+            "validation_message": f"Error: unable to read the current config. {e}",
             "result": result,
         }
 
@@ -109,14 +109,14 @@ def _verify_saved_config(content: str) -> tuple[bool, str]:
     try:
         saved_content = read_config_text()
     except OSError as e:
-        return False, f"Post-write verification failed: {e}"
+        return False, f"Error: post-write verification failed. {e}"
 
     valid, message = validate_yaml_text(saved_content)
     if not valid:
-        return False, f"Post-write verification failed: {message}"
+        return False, f"Error: post-write verification failed. {message}"
 
     if compute_sha256(saved_content) != compute_sha256(content):
-        return False, "Post-write verification failed: final content differs from the requested content"
+        return False, "Error: post-write verification failed. Final content differs from the requested content."
 
     return True, "ok"
 
@@ -126,22 +126,22 @@ def save_config(content: str) -> dict:
     if not valid:
         return {
             "ok": False,
-            "message": f"YAML validation failed: {message}",
+            "message": f"Error: YAML validation failed. {message}",
         }
 
     try:
         backup_path = create_backup()
     except FileNotFoundError as e:
-        return {"ok": False, "message": str(e)}
+        return {"ok": False, "message": f"Error: {e}"}
     except OSError as e:
-        return {"ok": False, "message": f"Config backup failed: {e}"}
+        return {"ok": False, "message": f"Error: config backup failed. {e}"}
 
     try:
         atomic_write_config(content)
     except OSError as e:
         return {
             "ok": False,
-            "message": f"Config write failed: {e}",
+            "message": f"Error: config write failed. {e}",
             "backup_path": str(backup_path),
         }
 
@@ -155,7 +155,7 @@ def save_config(content: str) -> dict:
 
     return {
         "ok": True,
-        "message": "Config saved successfully",
+        "message": "Config saved.",
         "backup_path": str(backup_path),
         "sha256": compute_sha256(content),
     }
@@ -190,34 +190,34 @@ def restore_backup(filename: str) -> dict:
     ensure_backup_dir()
     safe_filename = Path(str(filename or "")).name
     if not safe_filename or safe_filename != str(filename):
-        return {"ok": False, "message": "Invalid backup name"}
+        return {"ok": False, "message": "Error: invalid backup name."}
 
     backup_file = BACKUP_DIR / safe_filename
 
     if not backup_file.exists():
-        return {"ok": False, "message": f"Backup not found: {safe_filename}"}
+        return {"ok": False, "message": f"Error: backup not found: {safe_filename}."}
 
     content = backup_file.read_text(encoding="utf-8")
     valid, message = validate_yaml_text(content)
     if not valid:
         return {
             "ok": False,
-            "message": f"The backup does not contain valid YAML: {message}",
+            "message": f"Error: backup does not contain valid YAML. {message}",
         }
 
     try:
         current_backup = create_backup()
     except FileNotFoundError as e:
-        return {"ok": False, "message": str(e)}
+        return {"ok": False, "message": f"Error: {e}"}
     except OSError as e:
-        return {"ok": False, "message": f"Pre-restore backup failed: {e}"}
+        return {"ok": False, "message": f"Error: pre-restore backup failed. {e}"}
 
     try:
         atomic_write_config(content)
     except OSError as e:
         return {
             "ok": False,
-            "message": f"Backup restore failed: {e}",
+            "message": f"Error: backup restore failed. {e}",
             "pre_restore_backup": str(current_backup),
         }
 
@@ -231,7 +231,7 @@ def restore_backup(filename: str) -> dict:
 
     return {
         "ok": True,
-        "message": "Rollback completed",
+        "message": "Backup restored.",
         "restored_from": safe_filename,
         "pre_restore_backup": str(current_backup),
     }

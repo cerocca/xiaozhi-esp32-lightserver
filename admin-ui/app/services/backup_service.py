@@ -18,24 +18,24 @@ def delete_backup(filename: str) -> dict:
     try:
         safe_filename = Path(str(filename or "")).name
         if not safe_filename or safe_filename != str(filename):
-            return {"ok": False, "message": "Invalid backup name"}
+            return {"ok": False, "message": "Error: invalid backup name."}
 
         path = BACKUP_DIR / safe_filename
 
         if not path.is_file():
-            return {"ok": False, "message": "File not found"}
+            return {"ok": False, "message": "Error: file not found."}
 
         path.unlink()
-        return {"ok": True, "message": f"Backup deleted: {safe_filename}"}
+        return {"ok": True, "message": f"Backup deleted: {safe_filename}."}
 
     except Exception as e:
-        return {"ok": False, "message": str(e)}
+        return {"ok": False, "message": f"Error: {e}"}
 
 
 def delete_all_backups() -> dict:
     try:
         if not BACKUP_DIR.exists():
-            return {"ok": True, "message": "No backups available"}
+            return {"ok": True, "message": "No backups available."}
 
         count = 0
         for path in BACKUP_DIR.glob("*.config.yaml"):
@@ -43,7 +43,7 @@ def delete_all_backups() -> dict:
                 path.unlink()
                 count += 1
 
-        return {"ok": True, "message": f"{count} backups deleted"}
+        return {"ok": True, "message": f"Backups deleted: {count}."}
 
     except Exception as e:
-        return {"ok": False, "message": str(e)}
+        return {"ok": False, "message": f"Error: {e}"}

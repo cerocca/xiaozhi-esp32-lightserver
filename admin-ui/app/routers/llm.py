@@ -237,9 +237,9 @@ def _save_llm(
         )
         result["restart_result"] = restart_result
         if restart_result.get("ok"):
-            result["message"] = f'{result["message"]} + Xiaozhi restart completed'
+            result["message"] = f'{str(result["message"]).rstrip(". ")}. Xiaozhi restarted.'
         else:
-            result["message"] = f'{result["message"]} but Xiaozhi restart failed'
+            result["message"] = f'{str(result["message"]).rstrip(". ")}. Xiaozhi restart failed.'
 
     selected_profile_name = profile_name
     if result.get("ok") and result.get("selected_module_name"):
@@ -371,9 +371,9 @@ def llm_save_and_restart_legacy(
         )
         result["restart_result"] = restart_result
         if restart_result.get("ok"):
-            result["message"] = f'{result["message"]} + Xiaozhi restart completed'
+            result["message"] = f'{str(result["message"]).rstrip(". ")}. Xiaozhi restarted.'
         else:
-            result["message"] = f'{result["message"]} but Xiaozhi restart failed'
+            result["message"] = f'{str(result["message"]).rstrip(". ")}. Xiaozhi restart failed.'
 
     selected_profile_name = result.get("selected_module_name", provider)
     redirect_url = _build_redirect_url(profile_name=selected_profile_name, result=result)

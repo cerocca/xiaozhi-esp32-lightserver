@@ -53,15 +53,15 @@ def _load_config_data_for_update():
     try:
         content = read_config_text()
     except OSError as exc:
-        return None, f"Unable to read the current config: {exc}"
+        return None, f"Error: unable to read the current config. {exc}"
 
     try:
         data = yaml.safe_load(content) or {}
     except yaml.YAMLError as exc:
-        return None, f"Current config is invalid: {exc}"
+        return None, f"Error: current config is invalid. {exc}"
 
     if not isinstance(data, dict):
-        return None, "Current config is invalid: the YAML root must be a map"
+        return None, "Error: current config is invalid. The YAML root must be a map."
 
     return data, ""
 
@@ -91,7 +91,7 @@ def _profile_name_error(profile_name):
     return {
         "ok": False,
         "message": (
-            f"Invalid profile name: {profile_name}. "
+            f"Error: invalid profile name: {profile_name}. "
             "Use only letters, numbers, underscores (_), or hyphens (-)."
         ),
     }
@@ -222,7 +222,7 @@ def _build_tts_test_endpoint(endpoint: str) -> str:
 def _sanitize_tts_test_error(message: str) -> str:
     text = str(message or "").strip()
     if not text:
-        return "Unknown error"
+        return "Unknown error."
 
     sanitized = text.replace("\n", " ").replace("\r", " ")
     while "  " in sanitized:
@@ -311,13 +311,13 @@ def test_active_tts(input_text: str = "Test audio"):
 
     if not profile_name:
         result["ok"] = False
-        result["message"] = "No active TTS profile to test"
+        result["message"] = "Error: no active TTS profile to test."
         result["error_reason"] = "runtime.tts_profile not resolved"
         return result
 
     if not endpoint:
         result["ok"] = False
-        result["message"] = f"TTS test not run: {profile_name}"
+        result["message"] = f"Error: TTS test not run: {profile_name}."
         result["error_reason"] = "audio/speech endpoint unavailable"
         return result
 
@@ -331,11 +331,11 @@ def test_active_tts(input_text: str = "Test audio"):
 
         if response.is_success:
             result["ok"] = True
-            result["message"] = f"TTS test completed: {profile_name}"
+            result["message"] = f"TTS test completed: {profile_name}."
             return result
 
         result["ok"] = False
-        result["message"] = f"TTS test failed: {profile_name}"
+        result["message"] = f"Error: TTS test failed: {profile_name}."
 
         error_reason = ""
         try:
@@ -357,7 +357,7 @@ def test_active_tts(input_text: str = "Test audio"):
         return result
     except Exception as exc:
         result["ok"] = False
-        result["message"] = f"TTS test failed: {profile_name}"
+        result["message"] = f"Error: TTS test failed: {profile_name}."
         result["error_reason"] = _sanitize_tts_test_error(str(exc))
         return result
 
@@ -580,7 +580,7 @@ def get_tts_page_data(selected_profile_name=""):
 def update_single_tts_profile(profile_name, patch):
     profile_name = _sanitize_profile_name(profile_name)
     if not profile_name:
-        return {"ok": False, "message": "Invalid profile name"}
+        return {"ok": False, "message": "Error: invalid profile name."}
     if not _is_valid_profile_name(profile_name):
         return _profile_name_error(profile_name)
 
@@ -591,7 +591,7 @@ def update_single_tts_profile(profile_name, patch):
     tts_section = _ensure_dict(data, "TTS")
     existing_block = tts_section.get(profile_name)
     if not isinstance(existing_block, dict):
-        return {"ok": False, "message": f"Profile does not exist: {profile_name}"}
+        return {"ok": False, "message": f"Error: profile does not exist: {profile_name}."}
 
     type_value = str(patch.get("type", existing_block.get("type", "")) or "").strip()
     endpoint = str(patch.get("endpoint", _get_endpoint(existing_block)) or "").strip()
@@ -606,15 +606,15 @@ def update_single_tts_profile(profile_name, patch):
         final_api_key = api_key_input
 
     if not type_value:
-        return {"ok": False, "message": "The type field cannot be empty"}
+        return {"ok": False, "message": "Error: type field cannot be empty."}
     if not endpoint:
-        return {"ok": False, "message": "The API URL / Base URL field cannot be empty"}
+        return {"ok": False, "message": "Error: API URL / Base URL field cannot be empty."}
     if not model:
-        return {"ok": False, "message": "The model field cannot be empty"}
+        return {"ok": False, "message": "Error: model field cannot be empty."}
     if not voice:
-        return {"ok": False, "message": "The voice field cannot be empty"}
+        return {"ok": False, "message": "Error: voice field cannot be empty."}
     if _tts_requires_api_key(endpoint, model) and not final_api_key:
-        return {"ok": False, "message": "Missing API key when required"}
+        return {"ok": False, "message": "Error: missing API key."}
 
     updated_block = dict(existing_block)
     endpoint_field = _get_endpoint_field_name(existing_block)
@@ -642,7 +642,7 @@ def update_single_tts_profile(profile_name, patch):
     new_yaml = yaml.safe_dump(data, allow_unicode=True, sort_keys=False)
     result = save_config(new_yaml)
     if result.get("ok"):
-        result["message"] = f"Profile updated: {profile_name}"
+        result["message"] = f"Profile updated: {profile_name}."
         result["selected_profile_name"] = profile_name
 
     return result
@@ -651,7 +651,7 @@ def update_single_tts_profile(profile_name, patch):
 def set_active_tts(profile_name):
     profile_name = _sanitize_profile_name(profile_name)
     if not profile_name:
-        return {"ok": False, "message": "Invalid TTS profile"}
+        return {"ok": False, "message": "Error: invalid TTS profile."}
     if not _is_valid_profile_name(profile_name):
         return _profile_name_error(profile_name)
 
@@ -661,7 +661,7 @@ def set_active_tts(profile_name):
 
     tts_section = _get_dict(data, "TTS")
     if not isinstance(tts_section.get(profile_name), dict):
-        return {"ok": False, "message": f"Profile does not exist: {profile_name}"}
+        return {"ok": False, "message": f"Error: profile does not exist: {profile_name}."}
 
     runtime = _ensure_dict(data, "runtime")
     runtime["tts_profile"] = profile_name
@@ -674,7 +674,7 @@ def set_active_tts(profile_name):
     result = save_config(new_yaml)
     if result.get("ok"):
         summary = _build_profile_summary(profile_name, tts_section.get(profile_name, {}), profile_name)
-        result["message"] = f"Active profile changed: {profile_name}"
+        result["message"] = f"Active profile: {profile_name}."
         result["selected_profile_name"] = profile_name
         result["validation_status"] = summary.get("validation_status", "ok")
         result["validation_warnings"] = summary.get("validation_warnings", [])
@@ -695,7 +695,7 @@ def _next_profile_name(tts_section, base_name):
 def create_tts_profile(provider_id, profile_name=None):
     provider_id = str(provider_id or "").strip()
     if provider_id not in TTS_PRESETS:
-        return {"ok": False, "message": f"Unsupported TTS preset: {provider_id}"}
+        return {"ok": False, "message": f"Error: unsupported TTS preset: {provider_id}."}
 
     requested_profile_name = _sanitize_profile_name(profile_name or "")
     if requested_profile_name and not _is_valid_profile_name(requested_profile_name):
@@ -712,7 +712,7 @@ def create_tts_profile(provider_id, profile_name=None):
         return _profile_name_error(base_name)
 
     if requested_profile_name and requested_profile_name in tts_section:
-        return {"ok": False, "message": f"Profile already exists: {requested_profile_name}"}
+        return {"ok": False, "message": f"Error: profile already exists: {requested_profile_name}."}
 
     final_profile_name = requested_profile_name or _next_profile_name(tts_section, base_name)
     new_block = {
@@ -731,7 +731,7 @@ def create_tts_profile(provider_id, profile_name=None):
     new_yaml = yaml.safe_dump(data, allow_unicode=True, sort_keys=False)
     result = save_config(new_yaml)
     if result.get("ok"):
-        result["message"] = f"Profile created: {final_profile_name}"
+        result["message"] = f"Profile created: {final_profile_name}."
         result["selected_profile_name"] = final_profile_name
 
     return result
@@ -740,7 +740,7 @@ def create_tts_profile(provider_id, profile_name=None):
 def delete_tts_profile(profile_name):
     profile_name = _sanitize_profile_name(profile_name)
     if not profile_name:
-        return {"ok": False, "message": "Invalid profile name"}
+        return {"ok": False, "message": "Error: invalid profile name."}
     if not _is_valid_profile_name(profile_name):
         return _profile_name_error(profile_name)
 
@@ -750,11 +750,11 @@ def delete_tts_profile(profile_name):
 
     tts_section = _get_dict(data, "TTS")
     if not isinstance(tts_section.get(profile_name), dict):
-        return {"ok": False, "message": f"Profile does not exist: {profile_name}"}
+        return {"ok": False, "message": f"Error: profile does not exist: {profile_name}."}
 
     active_profile_name = _resolve_active_profile_name(data)
     if profile_name == active_profile_name:
-        return {"ok": False, "message": f"Active profile cannot be deleted: {profile_name}"}
+        return {"ok": False, "message": f"Error: active profile cannot be deleted: {profile_name}."}
 
     del tts_section[profile_name]
     data["TTS"] = tts_section
@@ -762,7 +762,7 @@ def delete_tts_profile(profile_name):
     new_yaml = yaml.safe_dump(data, allow_unicode=True, sort_keys=False)
     result = save_config(new_yaml)
     if result.get("ok"):
-        result["message"] = f"Profile deleted: {profile_name}"
+        result["message"] = f"Profile deleted: {profile_name}."
         result["selected_profile_name"] = active_profile_name
 
     return result

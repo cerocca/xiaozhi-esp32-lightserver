@@ -98,7 +98,7 @@
     <div class="flash {% if result.ok %}flash-ok{% else %}flash-err{% endif %}">
       <div>
         <strong>
-          {% if result.ok %}Operation completed{% else %}Operation failed{% endif %}
+          {% if result.ok %}Success{% else %}Error{% endif %}
         </strong>
       </div>
       {% if result.message %}
@@ -106,7 +106,6 @@
       {% endif %}
       {% if result.ok and result.action_kind == "switch" %}
         <div style="margin-top: 8px;">Profile selected for runtime: <code>{{ result.selected_profile_name or result.selected_module_name }}</code></div>
-        <div style="margin-top: 6px;">Config saved to <code>.config.yaml</code> by updating <code>{{ result.runtime_key or "runtime.llm_profile" }}</code>.</div>
         {% if result.validation_status == "warning" %}
           <div style="margin-top: 6px;">This profile has validation warnings: restart/runtime may fail.</div>
           {% for warning in result.validation_warnings %}
@@ -132,7 +131,7 @@
           <div style="margin-top: 6px;">Short response: <code>{{ result.reply_preview }}</code></div>
         {% endif %}
         {% if result.validation_status == "warning" %}
-          <div style="margin-top: 6px;">Warnings:</div>
+          <div style="margin-top: 6px;">Warnings (test executed anyway):</div>
           {% for warning in result.validation_warnings %}
             <div class="muted" style="margin-top: 4px;">- {{ warning }}</div>
           {% endfor %}
@@ -142,8 +141,7 @@
         {% endif %}
         <div style="margin-top: 6px;">This test is separate from <code>/api/health</code> and performs a minimal completion request using the active runtime LLM profile.</div>
       {% elif result.ok %}
-        <div style="margin-top: 8px;">Config saved to <code>.config.yaml</code>.</div>
-        <div style="margin-top: 6px;">A Xiaozhi restart may be required before the change is actually reflected in the runtime.</div>
+        <div style="margin-top: 8px;">A Xiaozhi restart may be required before the change is reflected in the runtime.</div>
       {% endif %}
       {% if result.backup_path %}
         <div style="margin-top: 8px;">Backup saved to: <code>{{ result.backup_path }}</code></div>
