@@ -49,7 +49,7 @@ def get_xiaozhi_status() -> dict:
         "name": "xiaozhi-esp32-server",
         "exists": True,
         "healthy": result["ok"],
-        "summary": "docker compose ps executed" if result["ok"] else "docker compose ps error",
+        "summary": "Container status available" if result["ok"] else "Container status unavailable",
         "details": result["stdout"] or result["stderr"],
     }
 

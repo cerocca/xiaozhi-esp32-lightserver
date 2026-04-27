@@ -4,15 +4,18 @@
 <section class="grid dashboard-grid">
   <article class="card dashboard-card">
     <div class="dashboard-card-head">
-      <h2>Server Xiaozhi</h2>
+      <h2>Xiaozhi backend</h2>
       {% if status.xiaozhi.healthy %}
         <span class="badge ok">OK</span>
       {% else %}
-        <span class="badge err">ERROR</span>
+        <span class="badge err">Error</span>
       {% endif %}
     </div>
-    <p class="dashboard-card-summary">{{ status.xiaozhi.summary }}</p>
-    <pre class="dashboard-card-content">{{ status.xiaozhi.details }}</pre>
+    <p class="muted">Backend service status and container runtime.</p>
+    <p class="dashboard-card-summary"><strong>{{ status.xiaozhi.summary }}</strong></p>
+    {% if status.xiaozhi.details %}
+      <pre class="dashboard-card-content muted">{{ status.xiaozhi.details.split('\n')[:2] | join('\n') }}</pre>
+    {% endif %}
 
     <div class="dashboard-card-actions">
       <form method="post" action="/actions/xserver/restart"
@@ -35,11 +38,14 @@
       {% if status.piper.healthy %}
         <span class="badge ok">OK</span>
       {% else %}
-        <span class="badge err">ERROR</span>
+        <span class="badge err">Error</span>
       {% endif %}
     </div>
-    <p class="dashboard-card-summary">{{ status.piper.summary }}</p>
-    <pre class="dashboard-card-content">{{ status.piper.details }}</pre>
+    <p class="muted">Local TTS service status and controls.</p>
+    <p class="dashboard-card-summary"><strong>{{ status.piper.summary }}</strong></p>
+    {% if status.piper.details %}
+      <pre class="dashboard-card-content muted">{{ status.piper.details }}</pre>
+    {% endif %}
 
     <div class="dashboard-card-actions">
       <form method="post" action="/actions/piper/restart"
@@ -58,15 +64,18 @@
 
   <article class="card dashboard-card">
     <div class="dashboard-card-head">
-      <h2>Runtime config</h2>
+      <h2>Config</h2>
       {% if status.config.healthy %}
         <span class="badge ok">OK</span>
       {% else %}
-        <span class="badge err">ERROR</span>
+        <span class="badge err">Error</span>
       {% endif %}
     </div>
-    <p class="dashboard-card-summary">{{ status.config.summary }}</p>
-    <pre class="dashboard-card-content">{{ status.config.details }}</pre>
+    <p class="muted">Current configuration file and validation status.</p>
+    <p class="dashboard-card-summary"><strong>{{ status.config.summary }}</strong></p>
+    {% if status.config.details %}
+      <pre class="dashboard-card-content muted">{{ status.config.details }}</pre>
+    {% endif %}
 
     <div class="actions dashboard-card-actions">
       <a class="button-link" href="/config">Open config</a>
