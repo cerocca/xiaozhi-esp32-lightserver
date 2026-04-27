@@ -1,6 +1,6 @@
 # SETUP
 
-This guide covers the simplest path to run `xiaozhi-admin-ui` on a Linux server, with explicit configuration and minimal manual steps.
+This guide covers the simplest path to run `xiaozhi-admin-ui` from the `xiaozhi-esp32-lightserver` monorepo, with explicit configuration and minimal manual steps.
 
 ---
 
@@ -30,7 +30,7 @@ Critical requirement:
 Verify the backend is actually working:
 
 ```bash
-cd /home/xiaozhi/xiaozhi-esp32-lightserver
+cd /home/<user>/xiaozhi-esp32-lightserver
 ls -ld .
 ls -l ./data/.config.yaml
 docker compose ps
@@ -38,7 +38,7 @@ docker compose ps
 curl -s http://127.0.0.1:8003/api/health
 ```
 
-This must return valid JSON.
+This must return valid JSON from the health endpoint.
 
 If using Piper:
 
@@ -54,7 +54,7 @@ curl -s http://127.0.0.1:8091/health
 Recommended monorepo layout:
 
 ```bash
-cd /home/xiaozhi/xiaozhi-esp32-lightserver/admin-ui
+cd /home/<user>/xiaozhi-esp32-lightserver/admin-ui
 ```
 
 Then create the virtualenv and install dependencies:
@@ -95,7 +95,7 @@ Meaning:
 - `XIAOZHI_DIR=..` points to the monorepo root, where `docker-compose.yml` lives
 - `XIAOZHI_CONFIG=../data/.config.yaml` points to the shared backend config
 
-Standalone installs can still override both paths to match their own filesystem layout.
+The monorepo layout above is the default recommended setup for this repository. Standalone path overrides are still possible, but they are not the default flow here.
 
 ---
 
@@ -142,7 +142,7 @@ Notes:
 ## 6. Run manually
 
 ```bash
-cd /home/xiaozhi/xiaozhi-esp32-lightserver/admin-ui
+cd /home/<user>/xiaozhi-esp32-lightserver/admin-ui
 source .venv/bin/activate
 
 python -c "import app.main; print('import ok')"
@@ -197,10 +197,10 @@ After=network-online.target
 
 [Service]
 Type=simple
-User=xiaozhi
-WorkingDirectory=/home/xiaozhi/xiaozhi-esp32-lightserver/admin-ui
-EnvironmentFile=/home/xiaozhi/xiaozhi-esp32-lightserver/admin-ui/.env
-ExecStart=/home/xiaozhi/xiaozhi-esp32-lightserver/admin-ui/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8088
+User=<user>
+WorkingDirectory=/home/<user>/xiaozhi-esp32-lightserver/admin-ui
+EnvironmentFile=/home/<user>/xiaozhi-esp32-lightserver/admin-ui/.env
+ExecStart=/home/<user>/xiaozhi-esp32-lightserver/admin-ui/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8088
 Restart=always
 
 [Install]

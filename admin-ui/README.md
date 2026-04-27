@@ -8,105 +8,48 @@
 ![Scope](https://img.shields.io/badge/scope-LAN--only-orange)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Minimal Admin UI to manage and observe a Xiaozhi ESP32 server in a LAN environment.  
-For full installation and step-by-step guide see [`SETUP.md`](SETUP.md).
+Server-rendered Admin UI for `xiaozhi-esp32-lightserver`.
 
-This component now also supports the monorepo layout used by `xiaozhi-esp32-lightserver`, where:
+It lives inside the monorepo under `admin-ui/` and acts as the runtime control plane for the backend in the repository root. The UI reads the shared backend config from `../data/.config.yaml` by default and uses `/api/health` for runtime status.
 
-- `admin-ui/` contains the UI
-- `../data/.config.yaml` is the backend config
-- `..` is the backend compose/project root
+For full installation details, see [`SETUP.md`](SETUP.md).
 
----
+## Purpose
 
-## What it does
+Use the Admin UI to:
 
-- Dashboard with runtime status:
-  - LLM
-  - ASR
-  - TTS
-  - device (connected / disconnected)
+- inspect runtime health and service status
+- edit backend configuration
+- manage runtime profiles for LLM, ASR, and TTS
+- run isolated LLM, TTS, and ASR tests
+- review logs, backups, devices, and restart outcomes
 
-- Real runtime health integration via `/api/health`
+The UI is meant for practical operations on a running Xiaozhi backend, not as a separate standalone product.
 
-- Configuration:
-  - LLM
-  - ASR
-  - TTS
-
-- Read-only modules:
-  - VAD
-  - Intent
-  - Memory
-
-- Logs access (backend and Piper)
-
-- Operational actions:
-  - restart
-  - logs
-
-**Goal:**
-- real debugging  
-- simplicity  
-- zero overengineering  
-
----
-
-## Requirements
-
-- A working Xiaozhi-compatible backend (e.g. [xiaozhi-esp32-lightserver](https://github.com/cerocca/xiaozhi-esp32-lightserver) or [xiaozhi-esp32-server](https://github.com/xinnan-tech/xiaozhi-esp32-server) )
-
-- Local access to:
-  - backend repository
-  - configuration files
-
-- Docker (for backend)
-- Piper (optional)
-
-**Note:**  
-This UI is primarily tested with `xiaozhi-esp32-lightserver`.  
-Other backends exposing `/api/health` may work but are not guaranteed.
-
----
-
-## Runtime Health
-
-The Admin UI uses the backend `/api/health` endpoint as the single source of truth.
-
-- Top-level fields (`llm`, `asr`, `tts`, `device`) define the primary state  
-- `details` are optional and shown only as secondary context  
-- The UI never infers state from `details`  
-- If the health endpoint is unavailable, the UI shows an `UNKNOWN` state  
-- Device `disconnected` is treated as a neutral state, not an error  
-
-This ensures a clear distinction between:
-- module errors (backend reachable, component failing)  
-- backend unreachable (no reliable runtime data)  
-
----
-
-## Quick start
+## Setup From Zero
 
 ```bash
 cd admin-ui
-
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-
 cp .env.example .env
 ```
 
-Default monorepo values:
+Edit `.env` if needed:
 
 ```env
 XIAOZHI_DIR=..
 XIAOZHI_CONFIG=../data/.config.yaml
 ```
 
-Standalone installs can keep using the same UI, but should override those values to match their own backend checkout.
+Notes:
 
-Run:
+- `XIAOZHI_DIR=..` points to the monorepo root
+- `XIAOZHI_CONFIG=../data/.config.yaml` points to the shared backend config
+- change those values only if your filesystem layout is different
+
+Run the UI:
 
 ```bash
 uvicorn app.main:app --host 0.0.0.0 --port 8088
@@ -115,29 +58,49 @@ uvicorn app.main:app --host 0.0.0.0 --port 8088
 Open:
 
 ```text
-http://<SERVER_IP>:8088
+http://<server-ip>:8088
 ```
 
----
+## Pages
 
+- `Dashboard` shows runtime status cards, restart actions, and the latest health snapshot
+- `AI Stack` shows active runtime profiles and entry points for LLM, ASR, and TTS management
+- `LLM` manages LLM profiles and includes the runtime prompt test
+- `ASR` manages ASR profiles and includes the audio upload transcription test
+- `TTS` manages TTS profiles and includes the text-to-audio playback test
+- `Config` edits the shared backend YAML configuration
+- `Backups` manages saved config snapshots
+- `Logs` shows backend and related service logs
+- `Devices` shows device visibility and connection-related information
 
-## Repository docs
+## Runtime Tests
 
-- [`SETUP.md`](SETUP.md) → full installation guide (recommended)  
-- [`CHANGELOG.md`](CHANGELOG.md) → versions and changes  
+The runtime test actions are isolated checks. They do not automatically restart services.
 
----
+- `LLM`: prompt input -> response preview
+- `TTS`: text input -> generated audio with inline playback
+- `ASR`: audio file upload -> transcription preview
 
-## Project status
+These tests are intended to confirm that the currently active runtime profiles are behaving as expected.
 
-- `v0.1.5` → stable and usable  
-- next → incremental improvements (devices, logs, config UX)  
+## Runtime Health
 
----
+The UI uses `http://<server-ip>:8003/api/health` as the backend source of truth.
 
-## Philosophy
+- top-level `llm`, `asr`, `tts`, and `device` fields define the primary state
+- `details` is treated as secondary context only
+- if the health endpoint is unavailable, the UI shows `UNKNOWN`
+- `device=disconnected` is treated as neutral, not as a failure
 
-- Server-rendered (no SPA)  
-- No complex JavaScript  
-- Real debugging > UI decoration  
-- Incremental patches, no massive refactors  
+## Requirements
+
+- a working `xiaozhi-esp32-lightserver` backend or another compatible Xiaozhi backend
+- local access to the backend repository and config file
+- Python 3 with `venv`
+- Docker for the backend deployment flow
+- Piper only if your selected TTS profile depends on it
+
+## Repository Docs
+
+- [`SETUP.md`](SETUP.md) for the full Admin UI installation guide
+- [`CHANGELOG.md`](CHANGELOG.md) for release notes

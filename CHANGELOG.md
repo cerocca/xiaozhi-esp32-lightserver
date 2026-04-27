@@ -4,6 +4,11 @@ All relevant Admin UI changes are recorded here.
 
 ## [Unreleased]
 
+### Changed
+- Dashboard and status copy polished for clearer runtime visibility
+- Runtime result and message wording polished across the Admin UI
+- Repository and setup documentation refreshed for the monorepo Admin UI flow
+
 
 ## [0.3.0] - 2026-04-26
 

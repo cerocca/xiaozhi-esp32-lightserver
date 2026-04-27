@@ -122,9 +122,34 @@ Notes:
 * the Admin UI uses `/api/health` as the backend source of truth
 * `XIAOZHI_DIR=..` points to the monorepo root, where `docker-compose.yml` lives
 * `XIAOZHI_CONFIG=../data/.config.yaml` points to the shared backend config
-* the default Docker image / Compose flow remains server-only in this phase
-* `admin-ui/` should currently be run from the host with its own `.venv` setup
+* the default Docker image / Compose flow remains server-only
+* `admin-ui/` is expected to run from the host with its own `.venv` setup
 * detailed Admin UI setup remains in [`admin-ui/SETUP.md`](./admin-ui/SETUP.md)
+
+Default URLs after startup:
+
+- Admin UI: `http://<SERVER_HOST>:8088`
+- device WebSocket: `ws://<SERVER_HOST>:8000/xiaozhi/v1/`
+- health API: `http://<SERVER_HOST>:8003/api/health`
+
+If you want the Admin UI managed by `systemd`, use service name `xiaozhi-admin-ui` and point it to the monorepo path:
+
+```ini
+[Unit]
+Description=Xiaozhi Admin UI
+After=network-online.target
+
+[Service]
+Type=simple
+User=<user>
+WorkingDirectory=/home/<user>/xiaozhi-esp32-lightserver/admin-ui
+EnvironmentFile=/home/<user>/xiaozhi-esp32-lightserver/admin-ui/.env
+ExecStart=/home/<user>/xiaozhi-esp32-lightserver/admin-ui/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8088
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
 
 ## 4. Install the Project
 
@@ -141,11 +166,6 @@ Replace:
 - `<REPO_URL>` with your repository URL
 - `/opt/xiaozhi-esp32-lightserver` with your preferred `<PROJECT_DIR>`
 
-Portability note:
-
-- service names, script paths, and deployment layout may vary by host
-- examples in this guide use placeholders and should not be treated as required local names
-
 ## 5. Prepare the Runtime Config
 
 ### 5.1 Files That Matter
@@ -157,6 +177,12 @@ Use these files:
 - `server/main/xiaozhi-server/config.yaml` = shipped defaults, normally not edited for deployment
 - `Dockerfile` = image packaging layer that copies the current server tree into the container
 - `docker-compose.dev.yml` = optional local-development override that restores the source bind mount
+
+Monorepo note:
+
+- `admin-ui/` is the default Admin UI location for this repository
+- `data/.config.yaml` is the shared backend config path used by both backend operations and the Admin UI
+- the old standalone `xiaozhi-admin-ui` repository should not be treated as the default setup path for this repo
 
 Do not put deployment secrets into version-controlled files.
 
