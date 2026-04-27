@@ -33,10 +33,10 @@ def validate_yaml_text(content: str) -> tuple[bool, str]:
     try:
         data = yaml.safe_load(content)
         if data is None:
-            return False, "Il file YAML non può essere vuoto"
+            return False, "The YAML file cannot be empty"
         if not isinstance(data, dict):
-            return False, "La root del config deve essere una mappa YAML"
-        return True, "YAML valido"
+            return False, "The config root must be a YAML map"
+        return True, "Valid YAML"
     except yaml.YAMLError as e:
         return False, str(e)
 
@@ -58,7 +58,7 @@ def load_config_editor_state(result=None) -> dict:
         return {
             "content": "",
             "valid": False,
-            "validation_message": f"Impossibile leggere la config corrente: {e}",
+            "validation_message": f"Unable to read the current config: {e}",
             "result": result,
         }
 
@@ -109,14 +109,14 @@ def _verify_saved_config(content: str) -> tuple[bool, str]:
     try:
         saved_content = read_config_text()
     except OSError as e:
-        return False, f"Verifica post-write fallita: {e}"
+        return False, f"Post-write verification failed: {e}"
 
     valid, message = validate_yaml_text(saved_content)
     if not valid:
-        return False, f"Verifica post-write fallita: {message}"
+        return False, f"Post-write verification failed: {message}"
 
     if compute_sha256(saved_content) != compute_sha256(content):
-        return False, "Verifica post-write fallita: contenuto finale diverso da quello richiesto"
+        return False, "Post-write verification failed: final content differs from the requested content"
 
     return True, "ok"
 
@@ -126,7 +126,7 @@ def save_config(content: str) -> dict:
     if not valid:
         return {
             "ok": False,
-            "message": f"Validazione YAML fallita: {message}",
+            "message": f"YAML validation failed: {message}",
         }
 
     try:
@@ -134,14 +134,14 @@ def save_config(content: str) -> dict:
     except FileNotFoundError as e:
         return {"ok": False, "message": str(e)}
     except OSError as e:
-        return {"ok": False, "message": f"Backup config fallito: {e}"}
+        return {"ok": False, "message": f"Config backup failed: {e}"}
 
     try:
         atomic_write_config(content)
     except OSError as e:
         return {
             "ok": False,
-            "message": f"Scrittura config fallita: {e}",
+            "message": f"Config write failed: {e}",
             "backup_path": str(backup_path),
         }
 
@@ -155,7 +155,7 @@ def save_config(content: str) -> dict:
 
     return {
         "ok": True,
-        "message": "Config salvata correttamente",
+        "message": "Config saved successfully",
         "backup_path": str(backup_path),
         "sha256": compute_sha256(content),
     }
@@ -190,19 +190,19 @@ def restore_backup(filename: str) -> dict:
     ensure_backup_dir()
     safe_filename = Path(str(filename or "")).name
     if not safe_filename or safe_filename != str(filename):
-        return {"ok": False, "message": "Nome backup non valido"}
+        return {"ok": False, "message": "Invalid backup name"}
 
     backup_file = BACKUP_DIR / safe_filename
 
     if not backup_file.exists():
-        return {"ok": False, "message": f"Backup non trovato: {safe_filename}"}
+        return {"ok": False, "message": f"Backup not found: {safe_filename}"}
 
     content = backup_file.read_text(encoding="utf-8")
     valid, message = validate_yaml_text(content)
     if not valid:
         return {
             "ok": False,
-            "message": f"Il backup non contiene YAML valido: {message}",
+            "message": f"The backup does not contain valid YAML: {message}",
         }
 
     try:
@@ -210,14 +210,14 @@ def restore_backup(filename: str) -> dict:
     except FileNotFoundError as e:
         return {"ok": False, "message": str(e)}
     except OSError as e:
-        return {"ok": False, "message": f"Backup pre-restore fallito: {e}"}
+        return {"ok": False, "message": f"Pre-restore backup failed: {e}"}
 
     try:
         atomic_write_config(content)
     except OSError as e:
         return {
             "ok": False,
-            "message": f"Restore backup fallito: {e}",
+            "message": f"Backup restore failed: {e}",
             "pre_restore_backup": str(current_backup),
         }
 
@@ -231,7 +231,7 @@ def restore_backup(filename: str) -> dict:
 
     return {
         "ok": True,
-        "message": "Rollback completato",
+        "message": "Rollback completed",
         "restored_from": safe_filename,
         "pre_restore_backup": str(current_backup),
     }

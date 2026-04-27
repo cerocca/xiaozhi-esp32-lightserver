@@ -25,12 +25,12 @@ def restart_xserver(request: Request):
             "result": result,
             "health_status": health_status,
             "health_snapshot_title": "Post-restart health snapshot",
-            "health_snapshot_focus": "Panoramica runtime dopo restart Xiaozhi",
+            "health_snapshot_focus": "Runtime overview after Xiaozhi restart",
             "logs_href": "/logs?source=xserver&lines=200",
-            "logs_label": "Vedi log Xiaozhi",
+            "logs_label": "View Xiaozhi logs",
             "stack_href": "/ai",
-            "stack_label": "Apri AI Stack",
-            "health_note": "Controlla anche /api/health o AI Stack solo come contesto operativo, non come prova del profilo esatto in uso.",
+            "stack_label": "Open AI Stack",
+            "health_note": "Also check /api/health or AI Stack only as operational context, not as proof of the exact active profile.",
         },
     )
 
@@ -51,12 +51,12 @@ def restart_piper(request: Request):
             "result": result,
             "health_status": health_status,
             "health_snapshot_title": "Post-restart health snapshot",
-            "health_snapshot_focus": "Focus operativo TTS dopo restart Piper",
+            "health_snapshot_focus": "Operational TTS focus after Piper restart",
             "logs_href": "/logs?source=piper&lines=200",
-            "logs_label": "Vedi log Piper",
+            "logs_label": "View Piper logs",
             "stack_href": "/ai",
-            "stack_label": "Apri AI Stack",
-            "health_note": "Controlla anche /api/health o AI Stack solo come contesto operativo, non come prova del profilo esatto in uso.",
+            "stack_label": "Open AI Stack",
+            "health_note": "Also check /api/health or AI Stack only as operational context, not as proof of the exact active profile.",
         },
     )
 

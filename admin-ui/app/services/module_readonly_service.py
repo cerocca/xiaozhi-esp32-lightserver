@@ -10,7 +10,7 @@ MODULE_META = {
         "legacy_selected_key": "vad",
         "title": "VAD",
         "page_title": "VAD",
-        "description": "Voice Activity Detection: decide quando l'audio contiene davvero voce e quando la pipeline deve iniziare o fermarsi.",
+        "description": "Voice Activity Detection: determines when the audio really contains speech and when the pipeline should start or stop.",
     },
     "intent": {
         "section": "Intent",
@@ -18,7 +18,7 @@ MODULE_META = {
         "legacy_selected_key": "intent",
         "title": "Intent",
         "page_title": "Intent",
-        "description": "Intent: interpreta la richiesta e decide eventuali azioni o instradamenti semantici prima della risposta finale.",
+        "description": "Intent: interprets the request and decides any actions or semantic routing before the final response.",
     },
     "memory": {
         "section": "Memory",
@@ -26,7 +26,7 @@ MODULE_META = {
         "legacy_selected_key": "memory",
         "title": "Memory",
         "page_title": "Memory",
-        "description": "Memory: controlla se e come il backend conserva contesto o ricordi locali oltre il singolo turno.",
+        "description": "Memory: controls whether and how the backend keeps context or local memories beyond a single turn.",
     },
 }
 

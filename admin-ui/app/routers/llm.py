@@ -198,7 +198,7 @@ def _annotate_switch_result(result: dict, profile_name: str) -> dict:
     result["selected_profile_name"] = result.get("selected_module_name", profile_name)
     result["runtime_key"] = "runtime.llm_profile"
     result["logs_href"] = "/logs?source=xserver&lines=200"
-    result["logs_label"] = "Vedi log Xiaozhi"
+    result["logs_label"] = "View Xiaozhi logs"
     return result
 
 
@@ -237,9 +237,9 @@ def _save_llm(
         )
         result["restart_result"] = restart_result
         if restart_result.get("ok"):
-            result["message"] = f'{result["message"]} + restart Xiaozhi completato'
+            result["message"] = f'{result["message"]} + Xiaozhi restart completed'
         else:
-            result["message"] = f'{result["message"]} ma restart Xiaozhi fallito'
+            result["message"] = f'{result["message"]} but Xiaozhi restart failed'
 
     selected_profile_name = profile_name
     if result.get("ok") and result.get("selected_module_name"):
@@ -371,9 +371,9 @@ def llm_save_and_restart_legacy(
         )
         result["restart_result"] = restart_result
         if restart_result.get("ok"):
-            result["message"] = f'{result["message"]} + restart Xiaozhi completato'
+            result["message"] = f'{result["message"]} + Xiaozhi restart completed'
         else:
-            result["message"] = f'{result["message"]} ma restart Xiaozhi fallito'
+            result["message"] = f'{result["message"]} but Xiaozhi restart failed'
 
     selected_profile_name = result.get("selected_module_name", provider)
     redirect_url = _build_redirect_url(profile_name=selected_profile_name, result=result)

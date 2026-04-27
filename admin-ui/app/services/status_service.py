@@ -39,7 +39,7 @@ def get_xiaozhi_status() -> dict:
             "name": "xiaozhi-esp32-server",
             "exists": False,
             "healthy": False,
-            "summary": f"Directory non trovata: {settings.xiaozhi_dir}",
+            "summary": f"Directory not found: {settings.xiaozhi_dir}",
             "details": "",
         }
 
@@ -49,7 +49,7 @@ def get_xiaozhi_status() -> dict:
         "name": "xiaozhi-esp32-server",
         "exists": True,
         "healthy": result["ok"],
-        "summary": "docker compose ps eseguito" if result["ok"] else "errore docker compose ps",
+        "summary": "docker compose ps executed" if result["ok"] else "docker compose ps error",
         "details": result["stdout"] or result["stderr"],
     }
 
@@ -85,7 +85,7 @@ def get_config_status() -> dict:
         "exists": path.exists(),
         "healthy": path.exists() and path.is_file(),
         "summary": str(path),
-        "details": f"size={path.stat().st_size} bytes" if path.exists() else "file non trovato",
+        "details": f"size={path.stat().st_size} bytes" if path.exists() else "file not found",
     }
 
 

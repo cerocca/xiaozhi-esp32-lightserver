@@ -70,7 +70,7 @@
           <span class="ai-stack-label">Config</span>
           <div class="ai-stack-badges">
           {% for badge in item.config_badges %}
-            <span class="badge {% if badge.label == 'LOCALE' %}local{% elif badge.label == 'REMOTO' %}info{% elif badge.label == 'READ-ONLY' %}readonly{% else %}{{ badge.kind }}{% endif %}">{{ badge.label }}</span>
+            <span class="badge {% if badge.label == 'LOCAL' %}local{% elif badge.label == 'REMOTE' %}info{% elif badge.label == 'READ-ONLY' %}readonly{% else %}{{ badge.kind }}{% endif %}">{{ badge.label }}</span>
           {% endfor %}
           </div>
         </div>
@@ -123,7 +123,7 @@
           <h3 class="section-title">{{ item.title }}</h3>
           <div class="ai-stack-badges">
             {% for badge in item.badges %}
-              <span class="badge {% if badge.label == 'LOCALE' %}local{% elif badge.label == 'REMOTO' %}info{% elif badge.label == 'READ-ONLY' %}readonly{% else %}{{ badge.kind }}{% endif %}">{{ badge.label }}</span>
+              <span class="badge {% if badge.label == 'LOCAL' %}local{% elif badge.label == 'REMOTE' %}info{% elif badge.label == 'READ-ONLY' %}readonly{% else %}{{ badge.kind }}{% endif %}">{{ badge.label }}</span>
             {% endfor %}
           </div>
         </div>

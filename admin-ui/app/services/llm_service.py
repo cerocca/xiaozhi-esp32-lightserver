@@ -78,8 +78,8 @@ def _get_profile_name_validation_error(profile_name: str) -> dict:
     return {
         "ok": False,
         "message": (
-            f"Nome profilo non valido: {profile_name}. "
-            "Usa solo lettere, numeri, underscore (_) o trattino (-)."
+            f"Invalid profile name: {profile_name}. "
+            "Use only letters, numbers, underscores (_), or hyphens (-)."
         ),
     }
 
@@ -116,15 +116,15 @@ def _load_config_data_for_update() -> tuple[dict | None, str]:
     try:
         content = read_config_text()
     except OSError as e:
-        return None, f"Impossibile leggere la config corrente: {e}"
+        return None, f"Unable to read the current config: {e}"
 
     try:
         data = yaml.safe_load(content) or {}
     except yaml.YAMLError as e:
-        return None, f"Config corrente non valida: {e}"
+        return None, f"Current config is invalid: {e}"
 
     if not isinstance(data, dict):
-        return None, "Config corrente non valida: la root YAML deve essere una mappa"
+        return None, "Current config is invalid: the YAML root must be a map"
 
     return data, ""
 
@@ -253,7 +253,7 @@ def _build_llm_test_endpoint(base_url: str) -> str:
 def _sanitize_llm_test_error(message: str) -> str:
     text = str(message or "").strip()
     if not text:
-        return "Errore sconosciuto"
+        return "Unknown error"
 
     sanitized = text.replace("\n", " ").replace("\r", " ")
     while "  " in sanitized:
@@ -461,7 +461,7 @@ def _build_profile_summary(profile_name: str, block: dict, active_profile_name: 
         "is_active": profile_name == active_profile_name,
         "is_legacy": is_legacy,
         "legacy_note": (
-            "Profilo legacy, consigliato creare un nuovo profilo."
+            "Legacy profile, creating a new profile is recommended."
             if is_legacy else ""
         ),
         "validation_status": validation["validation_status"],
@@ -627,13 +627,13 @@ def get_llm_form_data() -> dict:
 
 def validate_llm_input(provider: str, api_key: str, model: str, base_url: str) -> dict:
     if provider not in PROVIDER_PRESETS:
-        return {"ok": False, "message": f"Provider non supportato: {provider}"}
+        return {"ok": False, "message": f"Unsupported provider: {provider}"}
 
     if not model.strip():
-        return {"ok": False, "message": "Il model non può essere vuoto"}
+        return {"ok": False, "message": "The model cannot be empty"}
 
     if not base_url.strip():
-        return {"ok": False, "message": "La base URL non può essere vuota"}
+        return {"ok": False, "message": "The base URL cannot be empty"}
 
     if provider in {"groq", "openai", "anthropic"} and not api_key.strip():
         # Non errore bloccante se la chiave esiste già in config; questo viene gestito dopo.
@@ -645,7 +645,7 @@ def validate_llm_input(provider: str, api_key: str, model: str, base_url: str) -
 def set_active_llm(profile_name: str) -> dict:
     profile_name = _sanitize_profile_name(profile_name)
     if not profile_name:
-        return {"ok": False, "message": "Profilo LLM non valido"}
+        return {"ok": False, "message": "Invalid LLM profile"}
     if not _is_valid_profile_name(profile_name):
         return _get_profile_name_validation_error(profile_name)
 
@@ -655,7 +655,7 @@ def set_active_llm(profile_name: str) -> dict:
 
     llm_section = _get_dict(data, "LLM")
     if not isinstance(llm_section.get(profile_name), dict):
-        return {"ok": False, "message": f"Profilo inesistente: {profile_name}"}
+        return {"ok": False, "message": f"Profile does not exist: {profile_name}"}
 
     runtime = _ensure_dict(data, "runtime")
     runtime["llm_profile"] = profile_name
@@ -673,7 +673,7 @@ def set_active_llm(profile_name: str) -> dict:
     result = save_config(new_yaml)
     if result.get("ok"):
         active = _build_profile_summary(profile_name, llm_section.get(profile_name, {}), profile_name)
-        result["message"] = f"Profilo attivo cambiato: {profile_name}"
+        result["message"] = f"Active profile changed: {profile_name}"
         result["selected_module_name"] = profile_name
         result["runtime_llm_profile"] = profile_name
         result["legacy_selected_module_name"] = (
@@ -699,12 +699,12 @@ def update_single_provider(
     provider_id = str(provider_id or "").strip()
 
     if not profile_name:
-        return {"ok": False, "message": "Nome profilo non valido"}
+        return {"ok": False, "message": "Invalid profile name"}
     if not _is_valid_profile_name(profile_name):
         return _get_profile_name_validation_error(profile_name)
 
     if provider_id not in PROVIDER_PRESETS:
-        return {"ok": False, "message": f"Provider non supportato: {provider_id}"}
+        return {"ok": False, "message": f"Unsupported provider: {provider_id}"}
 
     normalized = normalize_llm_form_data(
         provider_id,
@@ -739,7 +739,7 @@ def update_single_provider(
     if provider_id in {"groq", "openai", "anthropic"} and not final_api_key:
         return {
             "ok": False,
-            "message": f"API key mancante: il provider {provider_id} richiede una chiave.",
+            "message": f"Missing API key: provider {provider_id} requires a key.",
         }
 
     preset = PROVIDER_PRESETS[provider_id]
@@ -776,7 +776,7 @@ def update_single_provider(
     if result.get("ok"):
         active_profile_name = _resolve_active_profile_name(data)
         summary = _build_profile_summary(profile_name, updated_block, active_profile_name)
-        result["message"] = f"Profilo aggiornato: {profile_name}"
+        result["message"] = f"Profile updated: {profile_name}"
         result["selected_module_name"] = profile_name
         result["provider"] = provider_id
         result["active_model"] = summary.get("model", "")
@@ -790,7 +790,7 @@ def update_single_provider(
 def create_provider_profile(provider_id: str, profile_name: str | None = None) -> dict:
     provider_id = str(provider_id or "").strip()
     if provider_id not in PROVIDER_PRESETS:
-        return {"ok": False, "message": f"Provider non supportato: {provider_id}"}
+        return {"ok": False, "message": f"Unsupported provider: {provider_id}"}
 
     preset = PROVIDER_PRESETS[provider_id]
     requested_profile_name = _sanitize_profile_name(profile_name or "")
@@ -810,7 +810,7 @@ def create_provider_profile(provider_id: str, profile_name: str | None = None) -
 
     while final_profile_name in llm_section:
         if requested_profile_name:
-            return {"ok": False, "message": f"Profilo già esistente: {final_profile_name}"}
+            return {"ok": False, "message": f"Profile already exists: {final_profile_name}"}
         final_profile_name = f"{base_profile_name}_{counter}"
         counter += 1
 
@@ -845,7 +845,7 @@ def create_provider_profile(provider_id: str, profile_name: str | None = None) -
 def delete_provider_profile(profile_name: str) -> dict:
     profile_name = _sanitize_profile_name(profile_name)
     if not profile_name:
-        return {"ok": False, "message": "Nome profilo non valido"}
+        return {"ok": False, "message": "Invalid profile name"}
     if not _is_valid_profile_name(profile_name):
         return _get_profile_name_validation_error(profile_name)
 
@@ -855,11 +855,11 @@ def delete_provider_profile(profile_name: str) -> dict:
 
     llm_section = _get_dict(data, "LLM")
     if not isinstance(llm_section.get(profile_name), dict):
-        return {"ok": False, "message": f"Profilo inesistente: {profile_name}"}
+        return {"ok": False, "message": f"Profile does not exist: {profile_name}"}
 
     active_profile_name = _resolve_active_profile_name(data)
     if profile_name == active_profile_name:
-        return {"ok": False, "message": f"Profilo attivo non eliminabile: {profile_name}"}
+        return {"ok": False, "message": f"Active profile cannot be deleted: {profile_name}"}
 
     del llm_section[profile_name]
     data["LLM"] = llm_section
@@ -872,7 +872,7 @@ def delete_provider_profile(profile_name: str) -> dict:
 
     result = save_config(new_yaml)
     if result.get("ok"):
-        result["message"] = f"Profilo eliminato: {profile_name}"
+        result["message"] = f"Profile deleted: {profile_name}"
         result["deleted_profile_name"] = profile_name
         result["selected_module_name"] = active_profile_name
 

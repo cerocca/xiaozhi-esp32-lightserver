@@ -133,7 +133,7 @@ def _annotate_switch_result(result, profile_name):
     result["selected_profile_name"] = result.get("selected_profile_name", profile_name)
     result["runtime_key"] = "runtime.tts_profile"
     result["logs_href"] = "/logs?source=piper&lines=200"
-    result["logs_label"] = "Vedi log Piper"
+    result["logs_label"] = "View Piper logs"
     return result
 
 

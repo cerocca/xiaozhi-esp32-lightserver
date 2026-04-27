@@ -26,20 +26,20 @@ def _build_ui_badges(slug: str) -> list[dict]:
 
         for hint in (hints or []):
             if hint and hint.lower() in normalized_endpoint:
-                return _status_badge("LOCALE", "info")
+                return _status_badge("LOCAL", "info")
 
         parsed = urlparse(normalized_endpoint)
         hostname = str(parsed.hostname or "").strip().lower()
         if not hostname:
             return None
         if hostname in {"localhost", "127.0.0.1"}:
-            return _status_badge("LOCALE", "info")
+            return _status_badge("LOCAL", "info")
         try:
             if ip_address(hostname).is_private:
-                return _status_badge("LOCALE", "info")
-            return _status_badge("REMOTO", "muted")
+                return _status_badge("LOCAL", "info")
+            return _status_badge("REMOTE", "muted")
         except ValueError:
-            return _status_badge("REMOTO", "muted")
+            return _status_badge("REMOTE", "muted")
 
     if slug == "llm":
         active = get_active_llm()
@@ -51,7 +51,7 @@ def _build_ui_badges(slug: str) -> list[dict]:
         if not profile_name or not model or not endpoint:
             badges.append(_status_badge("ERR", "err"))
         elif active.get("requires_api_key") and not active.get("has_api_key"):
-            badges.append(_status_badge("PARZIALE", "warn"))
+            badges.append(_status_badge("PARTIAL", "warn"))
         else:
             badges.append(_status_badge("OK", "ok"))
 
@@ -75,7 +75,7 @@ def _build_ui_badges(slug: str) -> list[dict]:
         if not profile_name or not model or not endpoint:
             badges.append(_status_badge("ERR", "err"))
         elif active.get("requires_api_key") and not active.get("has_api_key"):
-            badges.append(_status_badge("PARZIALE", "warn"))
+            badges.append(_status_badge("PARTIAL", "warn"))
         else:
             badges.append(_status_badge("OK", "ok"))
 
@@ -94,12 +94,12 @@ def _build_ui_badges(slug: str) -> list[dict]:
         if not profile_name or not model or not endpoint:
             badges.append(_status_badge("ERR", "err"))
         elif active.get("requires_api_key") and not active.get("has_api_key"):
-            badges.append(_status_badge("PARZIALE", "warn"))
+            badges.append(_status_badge("PARTIAL", "warn"))
         else:
             badges.append(_status_badge("OK", "ok"))
 
         if active.get("is_local_piper"):
-            badges.append(_status_badge("LOCALE", "info"))
+            badges.append(_status_badge("LOCAL", "info"))
         else:
             scope_badge = _classify_endpoint_scope(endpoint)
             if scope_badge:
@@ -172,7 +172,7 @@ def ai_stack_index(request: Request):
             "title": "LLM",
             "href": "/llm",
             "slug": "llm",
-            "description": "Generazione delle risposte (modello e profili)",
+            "description": "Response generation (model and profiles)",
             "manage_label": "Manage LLM",
             "active_profile": str(llm_active.get("profile_name", "") or "").strip(),
             "runtime_profile": str(llm_page_data.get("runtime_llm_profile", "") or "").strip(),
@@ -185,7 +185,7 @@ def ai_stack_index(request: Request):
             "title": "ASR",
             "href": "/asr",
             "slug": "asr",
-            "description": "Speech -> text (riconoscimento vocale)",
+            "description": "Speech -> text (speech recognition)",
             "manage_label": "Manage ASR",
             "active_profile": str(asr_active.get("profile_name", "") or "").strip(),
             "runtime_profile": str(asr_page_data.get("runtime_asr_profile", "") or "").strip(),
@@ -198,7 +198,7 @@ def ai_stack_index(request: Request):
             "title": "TTS",
             "href": "/tts",
             "slug": "tts",
-            "description": "Text -> speech (sintesi vocale)",
+            "description": "Text -> speech (speech synthesis)",
             "manage_label": "Manage TTS",
             "active_profile": str(tts_active.get("profile_name", "") or "").strip(),
             "runtime_profile": str(tts_page_data.get("runtime_tts_profile", "") or "").strip(),
@@ -224,7 +224,7 @@ def ai_stack_index(request: Request):
     ]
     device_item = {
         "title": "Device",
-        "description": "Stato runtime del device collegato al backend Xiaozhi.",
+        "description": "Runtime status of the device connected to the Xiaozhi backend.",
         "runtime_badge": _build_runtime_badge("device", health_status),
         "runtime_detail": _build_runtime_detail("device", health_status),
     }
@@ -233,7 +233,7 @@ def ai_stack_index(request: Request):
             "title": "VAD",
             "href": "/vad",
             "slug": "vad",
-            "description": "Rilevamento presenza voce",
+            "description": "Voice activity detection",
             "badges": [
                 {"label": "READ-ONLY", "kind": "muted"},
                 {"label": "YAML", "kind": "info"},
@@ -243,7 +243,7 @@ def ai_stack_index(request: Request):
             "title": "Intent",
             "href": "/intent",
             "slug": "intent",
-            "description": "Interpretazione della richiesta",
+            "description": "Intent interpretation",
             "badges": [
                 {"label": "READ-ONLY", "kind": "muted"},
                 {"label": "YAML", "kind": "info"},
@@ -253,7 +253,7 @@ def ai_stack_index(request: Request):
             "title": "Memory",
             "href": "/memory",
             "slug": "memory",
-            "description": "Gestione contesto e memoria",
+            "description": "Context and memory management",
             "badges": [
                 {"label": "READ-ONLY", "kind": "muted"},
                 {"label": "YAML", "kind": "info"},
