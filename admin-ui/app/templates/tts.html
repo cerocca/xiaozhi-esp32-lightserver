@@ -109,11 +109,16 @@
         {% if result.http_status %}
           <div style="margin-top: 6px;">HTTP status: <strong>{{ result.http_status }}</strong></div>
         {% endif %}
+        {% if result.ok and result.audio_href %}
+          <div style="margin-top: 10px;">
+            <audio controls preload="none" src="{{ result.audio_href }}"></audio>
+          </div>
+        {% endif %}
         {% if result.content_type %}
           <div style="margin-top: 6px;">Content-Type: <code>{{ result.content_type }}</code></div>
         {% endif %}
         {% if result.validation_status == "warning" %}
-          <div style="margin-top: 6px;">The active profile has validation warnings: the test was run anyway.</div>
+          <div style="margin-top: 6px;">Warnings:</div>
           {% for warning in result.validation_warnings %}
             <div class="muted" style="margin-top: 4px;">- {{ warning }}</div>
           {% endfor %}
@@ -121,12 +126,7 @@
         {% if result.error_reason %}
           <div style="margin-top: 6px;">Reason: {{ result.error_reason }}</div>
         {% endif %}
-        {% if result.ok and result.audio_href %}
-          <div style="margin-top: 10px;">
-            <audio controls preload="none" src="{{ result.audio_href }}"></audio>
-          </div>
-        {% endif %}
-        <div style="margin-top: 6px;">This TTS test is separate from <code>/api/health</code> and performs a minimal synthesis request on the active runtime profile.</div>
+        <div style="margin-top: 6px;">This test is separate from <code>/api/health</code> and performs a minimal synthesis request using the active runtime TTS profile.</div>
       {% elif result.ok %}
         <div style="margin-top: 8px;">Config saved to <code>.config.yaml</code>.</div>
         <div style="margin-top: 6px;">A restart of the relevant service may be required before the change is actually reflected in the runtime.</div>
@@ -152,7 +152,7 @@
   <div class="card" style="margin-bottom: 16px;">
     <strong>Runtime application</strong>
     <div class="muted" style="margin-top: 8px;">
-      1. Save the profile if you change endpoint, voice, or credentials. 2. Use <strong>Activate</strong> to update <code>runtime.tts_profile</code>. 3. If you want to try applying the change to the current runtime, use one of the restarts below.
+      Save profile updates the selected YAML block, Activate updates <code>runtime.tts_profile</code>, and the restart actions below try to apply the active runtime TTS profile to the running services.
     </div>
     <div class="actions" style="margin-top: 12px;">
       <form method="post" action="/actions/xserver/restart" style="margin: 0;" onsubmit="return confirm('Restart Xiaozhi server?');">
@@ -162,6 +162,12 @@
         <button type="submit">Restart Piper</button>
       </form>
       <a class="button-link" href="/logs?source=piper&lines=200">View Piper logs</a>
+    </div>
+    <div style="margin-top: 16px;">
+      <strong>Runtime test</strong>
+      <div class="muted" style="margin-top: 6px;">
+        Sends a short synthesis request using the active runtime TTS profile.
+      </div>
     </div>
     <form method="post" action="/tts/test" style="margin-top: 12px;">
       <label for="tts_test_text">Test text</label>
@@ -175,9 +181,6 @@
           autocomplete="off"
         >
         <button type="submit">Test TTS</button>
-      </div>
-      <div class="muted" style="margin-top: 6px;">
-        Sends a short synthesis request using the active runtime TTS profile.
       </div>
     </form>
   </div>

@@ -102,19 +102,19 @@
         {% if result.http_status %}
           <div style="margin-top: 6px;">HTTP status: <strong>{{ result.http_status }}</strong></div>
         {% endif %}
+        {% if result.transcription_preview %}
+          <div style="margin-top: 6px;">Transcription: <code>{{ result.transcription_preview }}</code></div>
+        {% endif %}
         {% if result.validation_status == "warning" %}
-          <div style="margin-top: 6px;">The active profile has validation warnings: the test was run anyway.</div>
+          <div style="margin-top: 6px;">Warnings:</div>
           {% for warning in result.validation_warnings %}
             <div class="muted" style="margin-top: 4px;">- {{ warning }}</div>
           {% endfor %}
         {% endif %}
-        {% if result.transcription_preview %}
-          <div style="margin-top: 6px;">Transcription: <code>{{ result.transcription_preview }}</code></div>
-        {% endif %}
         {% if result.error_reason %}
           <div style="margin-top: 6px;">Reason: {{ result.error_reason }}</div>
         {% endif %}
-        <div style="margin-top: 6px;">This ASR test is separate from <code>/api/health</code> and performs a minimal transcription request on the active runtime profile.</div>
+        <div style="margin-top: 6px;">This test is separate from <code>/api/health</code> and performs a minimal transcription request using the active runtime ASR profile.</div>
       {% elif result.ok %}
         <div style="margin-top: 8px;">Config saved to <code>.config.yaml</code>.</div>
         <div style="margin-top: 6px;">A Xiaozhi restart may be required before the change is actually reflected in the runtime.</div>
@@ -137,7 +137,7 @@
   <div class="card" style="margin-bottom: 16px;">
     <strong>Runtime application</strong>
     <div class="muted" style="margin-top: 8px;">
-      1. Save the profile if you change endpoint, model, or credentials. 2. Use <strong>Activate</strong> to update <code>runtime.asr_profile</code>. 3. If you want to try applying the change to the current runtime, use the restart below.
+      Save profile updates the selected YAML block, Activate updates <code>runtime.asr_profile</code>, and Restart Xiaozhi tries to apply the active runtime ASR profile to the running service.
     </div>
     <div class="actions" style="margin-top: 12px;">
       <form method="post" action="/actions/xserver/restart" style="margin: 0;" onsubmit="return confirm('Restart Xiaozhi server?');">
@@ -145,14 +145,17 @@
       </form>
       <a class="button-link" href="/logs?source=xserver&lines=200">View Xiaozhi logs</a>
     </div>
+    <div style="margin-top: 16px;">
+      <strong>Runtime test</strong>
+      <div class="muted" style="margin-top: 6px;">
+        Uploads a short audio clip and transcribes it using the active runtime ASR profile.
+      </div>
+    </div>
     <form method="post" action="/asr/test" enctype="multipart/form-data" style="margin-top: 12px;">
       <label for="asr_test_file">Test audio</label>
       <div class="actions" style="margin-top: 8px;">
         <input type="file" id="asr_test_file" name="audio_file" accept="audio/*" required>
         <button type="submit">Test ASR</button>
-      </div>
-      <div class="muted" style="margin-top: 6px;">
-        Upload a short audio clip to transcribe it with the active runtime ASR profile.
       </div>
     </form>
   </div>
