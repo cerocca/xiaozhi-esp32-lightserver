@@ -143,23 +143,17 @@ Tests are isolated actions. They do not automatically restart services.
 
 ## Demo / Screenshots
 
-The Admin UI can validate the runtime stack from the browser with isolated checks for the active LLM, TTS, and ASR profiles.
+The Admin UI can validate the runtime stack directly from the browser with isolated checks for LLM, TTS, and ASR.
 
-What you can test:
+**What you can test:**
 
-- LLM: prompt -> response preview
-- TTS: text -> audio playback
-- ASR: audio upload -> transcription preview
+- LLM: prompt → response preview  
+- TTS: text → audio playback  
+- ASR: audio upload → transcription preview  
 
 ![Admin UI dashboard](docs/images/admin-ui-dashboard.png)
 
-![Admin UI LLM test](docs/images/admin-ui-llm-test.png)
-
-![Admin UI TTS test](docs/images/admin-ui-tts-test.png)
-
-![Admin UI ASR test](docs/images/admin-ui-asr-test.png)
-
-Screenshot files are optional and can be added under `docs/images/`.
+_Screenshot files are optional and can be added under `docs/images/`._
 
 ## Docker Notes
 
