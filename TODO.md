@@ -6,6 +6,9 @@
 - Improve validation and failure feedback for uploaded audio and text inputs
 - Add docs and demo screenshots for the Admin UI flows
 - Review post-restart status messaging for edge cases
+- [ ] Sibilla: configure OpenRouter as alternative LLM provider —
+      API key available, supports Gemini, Claude, Llama, Mistral etc.
+      No firmware changes needed, server-side Docker config only.
 
 ## Medium-term
 
